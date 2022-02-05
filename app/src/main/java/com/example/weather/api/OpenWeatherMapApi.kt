@@ -10,8 +10,8 @@ interface OpenWeatherMapApi {
     }
 
     @GET("data/2.5/weather")
-    suspend fun currentWeather(
+    suspend fun currentLocation(
         @Query("q") cityName: String,
         @Query("appid") apiKey: String
-    ): WeatherResponse
+    ): LocationResponse
 }

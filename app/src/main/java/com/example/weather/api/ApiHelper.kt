@@ -4,6 +4,6 @@ import com.example.weather.BuildConfig
 import javax.inject.Inject
 
 class ApiHelper @Inject constructor(private val openWeatherMapApi: OpenWeatherMapApi) {
-    suspend fun currentWeather(cityName: String) =
-        openWeatherMapApi.currentWeather(cityName, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
+    suspend fun currentLocation(cityName: String) =
+        openWeatherMapApi.currentLocation(cityName, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
 }

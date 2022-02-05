@@ -1,4 +1,4 @@
-package com.example.weather.data
+package com.example.weather.locationdata
 
 import com.example.weather.api.ApiHelper
 import com.example.weather.database.Location
@@ -11,12 +11,20 @@ class LocationRepository @Inject constructor(
     private val apiHelper: ApiHelper,
     private val locationDao: LocationDao
 ) {
-    suspend fun currentWeather(cityName: String) =
-        apiHelper.currentWeather(cityName)
+    suspend fun currentLocation(cityName: String) =
+        apiHelper.currentLocation(cityName)
 
     suspend fun insertLocation(location: Location) {
         locationDao.insert(location)
     }
 
+    suspend fun deleteLocation(location: Location) {
+        locationDao.delete(location)
+    }
+
     fun getAllLocations() = locationDao.getAll()
+
+    suspend fun deleteAllLocation() {
+        locationDao.deleteAll()
+    }
 }

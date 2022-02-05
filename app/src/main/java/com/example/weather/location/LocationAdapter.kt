@@ -5,12 +5,14 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.weather.database.Location
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.example.weather.api.LocationResponse
 import com.example.weather.databinding.LocationViewLayoutBinding
 
 class LocationAdapter(
-    private val LongClickHandler: (Location) -> Unit
-) : ListAdapter<Location, LocationAdapter.LocationViewHolder>(DIFF_CONFIG) {
+    private val LongClickHandler: (LocationResponse) -> Unit
+) : ListAdapter<LocationResponse, LocationAdapter.LocationViewHolder>(DIFF_CONFIG) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationViewHolder {
         val binding =
@@ -38,18 +40,30 @@ class LocationAdapter(
             }
         }
 
-        fun bind(location: Location) {
-            binding.locationTextView.text = location.cityName
+        fun bind(location: LocationResponse) {
+            binding.apply {
+                Glide.with(root)
+                    .load("http://openweathermap.org/img/wn/${location.weather[0].icon}@2x.png")
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .into(iconImageView)
+                locationTextView.text = location.name
+            }
         }
     }
 
     companion object {
-        val DIFF_CONFIG = object : DiffUtil.ItemCallback<Location>() {
-            override fun areItemsTheSame(oldItem: Location, newItem: Location): Boolean {
-                return oldItem.id == newItem.id
+        val DIFF_CONFIG = object : DiffUtil.ItemCallback<LocationResponse>() {
+            override fun areItemsTheSame(
+                oldItem: LocationResponse,
+                newItem: LocationResponse
+            ): Boolean {
+                return oldItem.name == newItem.name
             }
 
-            override fun areContentsTheSame(oldItem: Location, newItem: Location): Boolean {
+            override fun areContentsTheSame(
+                oldItem: LocationResponse,
+                newItem: LocationResponse
+            ): Boolean {
                 return oldItem == newItem
             }
         }

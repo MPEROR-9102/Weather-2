@@ -14,7 +14,6 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weather.R
 import com.example.weather.api.Status
-import com.example.weather.database.Location
 import com.example.weather.databinding.EdittextLayoutBinding
 import com.example.weather.databinding.FragmentLocationBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -56,7 +55,7 @@ class LocationFragment : Fragment() {
         }
 
         val locationAdapter = LocationAdapter { location ->
-            showDeleteDialog(location)
+            showDeleteDialog(location.name)
         }
         binding.apply {
             locationsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -66,15 +65,28 @@ class LocationFragment : Fragment() {
                 showLocationEntryDialog()
             }
         }
+
+        viewModel.currentLocation.observe(viewLifecycleOwner) {
+            it.let { resource ->
+                when (resource.status) {
+                    Status.LOADING -> { /* Initial load status */
+                    }
+                    Status.SUCCESS -> {
+                        viewModel.insertLocation(resource.data!!.name)
+                    }
+                    Status.ERROR -> {
+                        Toast.makeText(requireContext(), it.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
         viewModel.allLocation.observe(viewLifecycleOwner) { locationList ->
             binding.apply {
                 if (locationList.isNotEmpty()) {
                     noCityDataTextView.isVisible = false
                     locationsRecyclerView.isVisible = true
-                    locationAdapter.submitList(locationList)
-
-//                    viewModel.loadCityList(locationList)
-
+                    viewModel.loadLocationList(locationList)
                 } else {
                     noCityDataTextView.isVisible = true
                     locationsRecyclerView.isVisible = false
@@ -82,34 +94,25 @@ class LocationFragment : Fragment() {
             }
         }
 
-        viewModel.currentLocation.observe(viewLifecycleOwner) {
-            it.let { resource ->
-                when (resource.status) {
-                    Status.SUCCESS -> {
-                        binding.progressBar.isVisible = false
-                        viewModel.insertLocation(resource.data!!.name)
-                    }
-                    Status.ERROR -> {
-                        binding.progressBar.isVisible = false
-                        Toast.makeText(requireContext(), it.message, Toast.LENGTH_SHORT).show()
-                    }
-                    Status.LOADING -> {
-                        binding.progressBar.isVisible = true
+        viewModel.locationListData.observe(viewLifecycleOwner) {
+            it?.let { resource ->
+                binding.progressBar.apply {
+                    when (resource.status) {
+                        Status.LOADING -> {
+                            isVisible = true
+                        }
+                        Status.SUCCESS -> {
+                            isVisible = false
+                            locationAdapter.submitList(resource.data)
+                        }
+                        Status.ERROR -> {
+                            isVisible = false
+                            Toast.makeText(requireContext(), it.message, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
         }
-
-        // Code under testing
-//        viewModel.locationListData.observe(viewLifecycleOwner) {
-//            val responseBody = it.data
-//            if (!responseBody.isNullOrEmpty()) {
-//                val iconList = responseBody.map { response ->
-//                    Location(response.weather[0].icon)
-//                }
-//                Toast.makeText(requireContext(), iconList.toString(), Toast.LENGTH_LONG).show()
-//            }
-//        }
 
         return binding.root
     }
@@ -133,11 +136,11 @@ class LocationFragment : Fragment() {
             .show()
     }
 
-    private fun showDeleteDialog(location: Location) {
+    private fun showDeleteDialog(cityName: String) {
         val builder = AlertDialog.Builder(requireContext())
-            .setTitle("Delete ${location.cityName}?")
+            .setTitle("Delete $cityName?")
             .setPositiveButton("Delete") { _, _ ->
-                viewModel.deleteLocation(location)
+                viewModel.deleteLocation(cityName)
             }
             .setNeutralButton("Cancel") { _, _ -> }
         builder.show()

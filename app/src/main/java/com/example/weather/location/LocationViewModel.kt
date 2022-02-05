@@ -66,9 +66,9 @@ class LocationViewModel @Inject constructor(
         }
     }
 
-    fun deleteLocation(location: Location) {
+    fun deleteLocation(cityName: String) {
         viewModelScope.launch(IO) {
-            weatherRepository.deleteLocation(location)
+            weatherRepository.deleteLocation(cityName)
         }
     }
 

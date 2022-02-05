@@ -18,8 +18,8 @@ class LocationRepository @Inject constructor(
         locationDao.insert(location)
     }
 
-    suspend fun deleteLocation(location: Location) {
-        locationDao.delete(location)
+    suspend fun deleteLocation(cityName: String) {
+        locationDao.delete(cityName)
     }
 
     fun getAllLocations() = locationDao.getAll()

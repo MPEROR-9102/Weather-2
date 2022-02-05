@@ -30,7 +30,7 @@ class LocationViewModel @Inject constructor(
             }
         }
     }
-    val locationData = weatherRepository.getAllLocations()
+    val allLocation = weatherRepository.getAllLocations()
 
     fun loadCity(cityName: String) {
         cityNameData.postValue(cityName)

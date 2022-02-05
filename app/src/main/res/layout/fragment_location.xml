@@ -6,15 +6,18 @@
     android:layout_height="match_parent"
     tools:context=".location.LocationFragment">
 
-    <ProgressBar
-        android:id="@+id/progressBar"
+    <TextView
+        android:id="@+id/noCityDataTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/no_city_data"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias=".3"
         tools:visibility="visible" />
 
     <com.google.android.material.appbar.AppBarLayout
@@ -50,7 +53,18 @@
         android:layout_margin="16dp"
         android:contentDescription="@string/contentDesc"
         android:src="@drawable/ic_baseline_add_24"
-        app:layout_constraintBottom_toBottomOf="@+id/locationsRecyclerView"
-        app:layout_constraintEnd_toEndOf="@+id/locationsRecyclerView" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,6 +1,7 @@
 package com.example.weather.location
 
 import androidx.lifecycle.*
+import com.example.weather.api.LocationResponse
 import com.example.weather.api.Resource
 import com.example.weather.database.Location
 import com.example.weather.locationdata.LocationRepository
@@ -31,9 +32,32 @@ class LocationViewModel @Inject constructor(
         }
     }
     val allLocation = weatherRepository.getAllLocations()
+    private val locationList: MutableLiveData<List<Location>> = MutableLiveData()
+    val locationListData = locationList.switchMap { locations ->
+        liveData {
+            emit(Resource.loading(data = null))
+            try {
+                val locationData: MutableList<LocationResponse> = mutableListOf()
+                for (location in locations)
+                    locationData.add(weatherRepository.currentLocation(location.cityName))
+                emit(Resource.success(data = locationData))
+            } catch (exception: Exception) {
+                emit(
+                    Resource.error(
+                        data = null,
+                        message = exception.message ?: "Error loading data"
+                    )
+                )
+            }
+        }
+    }
 
     fun loadCity(cityName: String) {
         cityNameData.postValue(cityName)
+    }
+
+    fun loadLocationList(locations: List<Location>) {
+        locationList.postValue(locations)
     }
 
     fun insertLocation(cityName: String) {

@@ -72,6 +72,9 @@ class LocationFragment : Fragment() {
                     noCityDataTextView.isVisible = false
                     locationsRecyclerView.isVisible = true
                     locationAdapter.submitList(locationList)
+
+//                    viewModel.loadCityList(locationList)
+
                 } else {
                     noCityDataTextView.isVisible = true
                     locationsRecyclerView.isVisible = false
@@ -96,6 +99,17 @@ class LocationFragment : Fragment() {
                 }
             }
         }
+
+        // Code under testing
+//        viewModel.locationListData.observe(viewLifecycleOwner) {
+//            val responseBody = it.data
+//            if (!responseBody.isNullOrEmpty()) {
+//                val iconList = responseBody.map { response ->
+//                    Location(response.weather[0].icon)
+//                }
+//                Toast.makeText(requireContext(), iconList.toString(), Toast.LENGTH_LONG).show()
+//            }
+//        }
 
         return binding.root
     }

@@ -12,6 +12,7 @@ interface OpenWeatherMapApi {
     @GET("data/2.5/weather")
     suspend fun currentLocation(
         @Query("q") cityName: String,
+        @Query("units") unit: String,
         @Query("appid") apiKey: String
     ): LocationResponse
 }

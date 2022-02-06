@@ -47,6 +47,8 @@ class LocationAdapter(
                     .transition(DrawableTransitionOptions.withCrossFade())
                     .into(iconImageView)
                 locationTextView.text = location.name
+                tempTextView.text = String.format("%.0f°", location.main.temp)
+                mainTextView.text = location.weather[0].main
             }
         }
     }

@@ -1,16 +1,19 @@
 package com.example.weather.location
 
 import android.app.AlertDialog
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weather.R
 import com.example.weather.api.Status
@@ -59,6 +62,9 @@ class LocationFragment : Fragment() {
         }
         binding.apply {
             locationsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+            val itemDecoration = DividerItemDecoration(requireContext(), LinearLayout.VERTICAL)
+            itemDecoration.setDrawable(ColorDrawable(requireContext().resources.getColor(R.color.white)))
+            locationsRecyclerView.addItemDecoration(itemDecoration)
             locationsRecyclerView.adapter = locationAdapter
 
             addLocationButton.setOnClickListener {

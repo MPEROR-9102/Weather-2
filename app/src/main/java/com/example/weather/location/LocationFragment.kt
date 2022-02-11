@@ -19,6 +19,7 @@ import com.example.weather.R
 import com.example.weather.api.Status
 import com.example.weather.databinding.EdittextLayoutBinding
 import com.example.weather.databinding.FragmentLocationBinding
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -81,7 +82,13 @@ class LocationFragment : Fragment() {
                         viewModel.insertLocation(resource.data!!.name)
                     }
                     Status.ERROR -> {
-                        Toast.makeText(requireContext(), it.message, Toast.LENGTH_SHORT).show()
+                        Snackbar
+                            .make(
+                                binding.addLocationButton,
+                                "Location Not Found",
+                                Snackbar.LENGTH_SHORT
+                            )
+                            .show()
                     }
                 }
             }
@@ -91,11 +98,9 @@ class LocationFragment : Fragment() {
             binding.apply {
                 if (locationList.isNotEmpty()) {
                     noCityDataTextView.isVisible = false
-                    locationsRecyclerView.isVisible = true
                     viewModel.loadLocationList(locationList)
                 } else {
                     noCityDataTextView.isVisible = true
-                    locationsRecyclerView.isVisible = false
                 }
             }
         }
@@ -109,11 +114,12 @@ class LocationFragment : Fragment() {
                         }
                         Status.SUCCESS -> {
                             isVisible = false
+                            binding.locationsRecyclerView.isVisible = true
                             locationAdapter.submitList(resource.data)
                         }
                         Status.ERROR -> {
                             isVisible = false
-                            Toast.makeText(requireContext(), it.message, Toast.LENGTH_SHORT).show()
+                            binding.locationsRecyclerView.isVisible = false
                         }
                     }
                 }

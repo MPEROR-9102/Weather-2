@@ -1,21 +1,21 @@
 package com.example.weather
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.net.ConnectivityManager
 import android.os.Bundle
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private val weatherReceiver = WeatherReceiver()
+    @Inject
+    lateinit var weatherReceiver: WeatherReceiver
     private lateinit var connectivitySnackBar: Snackbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,6 +28,21 @@ class MainActivity : AppCompatActivity() {
                 "No Internet Connection",
                 Snackbar.LENGTH_INDEFINITE
             )
+            .setBackgroundTint(resources.getColor(R.color.red))
+            .setTextColor(Color.WHITE)
+
+        weatherReceiver.notConnected.observe(this) {
+            when (it) {
+                true -> {
+                    connectivitySnackBar.show()
+                    findViewById<FloatingActionButton>(R.id.addLocationButton).isVisible = false
+                }
+                false -> {
+                    connectivitySnackBar.dismiss()
+                    findViewById<FloatingActionButton>(R.id.addLocationButton).isVisible = true
+                }
+            }
+        }
     }
 
     override fun onStart() {
@@ -39,20 +54,5 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         unregisterReceiver(weatherReceiver)
-    }
-
-    inner class WeatherReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val noConnectivity =
-                intent?.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)
-
-            if (noConnectivity == true) {
-                connectivitySnackBar.show()
-                findViewById<Button>(R.id.addLocationButton).isVisible = false
-            } else {
-                connectivitySnackBar.dismiss()
-                findViewById<Button>(R.id.addLocationButton).isVisible = true
-            }
-        }
     }
 }

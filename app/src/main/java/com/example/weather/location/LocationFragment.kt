@@ -101,6 +101,7 @@ class LocationFragment : Fragment() {
                     viewModel.loadLocationList(locationList)
                 } else {
                     noCityDataTextView.isVisible = true
+                    locationsRecyclerView.isVisible = false
                 }
             }
         }

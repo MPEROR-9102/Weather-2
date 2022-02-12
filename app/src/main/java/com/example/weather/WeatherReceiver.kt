@@ -12,11 +12,11 @@ import javax.inject.Singleton
 @Singleton
 class WeatherReceiver @Inject constructor() : BroadcastReceiver() {
 
-    private val _notConnected: MutableLiveData<Boolean> = MutableLiveData()
-    val notConnected: LiveData<Boolean> = _notConnected
+    private val _noConnectivity: MutableLiveData<Boolean> = MutableLiveData()
+    val noConnectivity: LiveData<Boolean> = _noConnectivity
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        _notConnected.postValue(
+        _noConnectivity.postValue(
             intent?.getBooleanExtra(
                 ConnectivityManager.EXTRA_NO_CONNECTIVITY,
                 false

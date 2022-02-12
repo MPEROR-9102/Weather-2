@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
             .setBackgroundTint(resources.getColor(R.color.red))
             .setTextColor(Color.WHITE)
 
-        weatherReceiver.notConnected.observe(this) {
+        weatherReceiver.noConnectivity.observe(this) {
             when (it) {
                 true -> {
                     connectivitySnackBar.show()

@@ -1,7 +1,10 @@
 package com.example.weather.location
 
 import android.app.AlertDialog
+import android.content.Context
+import android.content.IntentFilter
 import android.graphics.drawable.ColorDrawable
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,11 +19,13 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weather.R
+import com.example.weather.WeatherReceiver
 import com.example.weather.api.Status
 import com.example.weather.databinding.EdittextLayoutBinding
 import com.example.weather.databinding.FragmentLocationBinding
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LocationFragment : Fragment() {
@@ -28,7 +33,17 @@ class LocationFragment : Fragment() {
     private var _binding: FragmentLocationBinding? = null
     private val binding get() = _binding!!
 
+    @Inject
+    lateinit var weatherReceiver: WeatherReceiver
     private val viewModel by viewModels<LocationViewModel>()
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        context.registerReceiver(
+            weatherReceiver,
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -89,6 +104,8 @@ class LocationFragment : Fragment() {
                                 Snackbar.LENGTH_SHORT
                             )
                             .show()
+
+                        // Timeout exception isn't handled yet.
                     }
                 }
             }
@@ -124,6 +141,15 @@ class LocationFragment : Fragment() {
                         }
                     }
                 }
+            }
+        }
+
+        weatherReceiver.noConnectivity.observe(viewLifecycleOwner) {
+            if (it == false &&
+                !binding.locationsRecyclerView.isVisible &&
+                !viewModel.allLocation.value.isNullOrEmpty()
+            ) {
+                viewModel.loadLocationList(viewModel.allLocation.value!!)
             }
         }
 
@@ -172,5 +198,10 @@ class LocationFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        context?.unregisterReceiver(weatherReceiver)
     }
 }

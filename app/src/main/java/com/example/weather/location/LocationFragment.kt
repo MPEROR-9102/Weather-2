@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -20,6 +21,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weather.R
 import com.example.weather.WeatherReceiver
+import com.example.weather.api.LocationResponse
 import com.example.weather.api.Status
 import com.example.weather.databinding.EdittextLayoutBinding
 import com.example.weather.databinding.FragmentLocationBinding
@@ -72,7 +74,7 @@ class LocationFragment : Fragment() {
             }
         }
 
-        val locationAdapter = LocationAdapter { location ->
+        val locationAdapter = LocationAdapter(itemClickHandler) { location ->
             showDeleteDialog(location.name)
         }
         binding.apply {
@@ -153,11 +155,18 @@ class LocationFragment : Fragment() {
         }
 
         weatherReceiver.noConnectivity.observe(viewLifecycleOwner) {
-            if (it == false &&
-                !binding.locationsRecyclerView.isVisible &&
-                !viewModel.allLocation.value.isNullOrEmpty()
-            ) {
-                viewModel.loadLocationList(viewModel.allLocation.value!!)
+            when (it) {
+                true -> {
+                    binding.addLocationButton.isVisible = false
+                }
+                false -> {
+                    if (!binding.locationsRecyclerView.isVisible &&
+                        !viewModel.allLocation.value.isNullOrEmpty()
+                    ) {
+                        viewModel.loadLocationList(viewModel.allLocation.value!!)
+                    }
+                    binding.addLocationButton.isVisible = true
+                }
             }
         }
 
@@ -225,5 +234,9 @@ class LocationFragment : Fragment() {
             }
             .setNeutralButton("Cancel") { _, _ -> }
         builder.show()
+    }
+
+    private val itemClickHandler = fun(locationResponse: LocationResponse) {
+        Toast.makeText(requireContext(), locationResponse.name, Toast.LENGTH_LONG).show()
     }
 }

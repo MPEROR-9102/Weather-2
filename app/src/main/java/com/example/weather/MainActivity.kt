@@ -5,8 +5,6 @@ import android.graphics.Color
 import android.net.ConnectivityManager
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -35,11 +33,9 @@ class MainActivity : AppCompatActivity() {
             when (it) {
                 true -> {
                     connectivitySnackBar.show()
-                    findViewById<FloatingActionButton>(R.id.addLocationButton).isVisible = false
                 }
                 false -> {
                     connectivitySnackBar.dismiss()
-                    findViewById<FloatingActionButton>(R.id.addLocationButton).isVisible = true
                 }
             }
         }

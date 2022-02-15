@@ -3,6 +3,7 @@ package com.example.weather.location
 import android.app.AlertDialog
 import android.content.Context
 import android.content.IntentFilter
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
 import android.os.Bundle
@@ -10,7 +11,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -59,11 +59,14 @@ class LocationFragment : Fragment() {
                         if (!viewModel.allLocation.value.isNullOrEmpty())
                             showDeleteAllDialog()
                         else
-                            Toast.makeText(
-                                requireContext(),
+                            Snackbar.make(
+                                binding.parentLayout,
                                 "No Cities To Delete",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                                Snackbar.LENGTH_SHORT
+                            ).setAnchorView(binding.addLocationButton)
+                                .setBackgroundTint(resources.getColor(R.color.red))
+                                .setTextColor(Color.WHITE)
+                                .show()
                         true
                     }
                     else -> {
@@ -90,22 +93,37 @@ class LocationFragment : Fragment() {
 
         viewModel.currentLocation.observe(viewLifecycleOwner) {
             it.let { resource ->
-                when (resource.status) {
-                    Status.LOADING -> { /* Initial load status */
-                    }
-                    Status.SUCCESS -> {
-                        viewModel.insertLocation(resource.data!!.name)
-                    }
-                    Status.ERROR -> {
-                        Snackbar
-                            .make(
-                                binding.addLocationButton,
-                                "Location Not Found",
+                binding.apply {
+                    when (resource.status) {
+                        Status.LOADING -> {
+                            progressBar.isVisible = true
+                        }
+                        Status.SUCCESS -> {
+                            Snackbar.make(
+                                binding.parentLayout,
+                                "City Added",
                                 Snackbar.LENGTH_SHORT
-                            )
-                            .show()
-
-                        // Timeout exception isn't handled yet.
+                            ).setAnchorView(binding.addLocationButton)
+                                .setBackgroundTint(Color.WHITE)
+                                .setTextColor(resources.getColor(R.color.red))
+                                .show()
+                            viewModel.insertLocation(resource.data!!.name)
+                        }
+                        Status.ERROR -> {
+                            var statusInfo = "City Not Found"
+                            if (resource.message != "HTTP 404 Not Found") {
+                                statusInfo = "Took Too Long To Respond"
+                            }
+                            progressBar.isVisible = false
+                            Snackbar.make(
+                                parentLayout,
+                                statusInfo,
+                                Snackbar.LENGTH_LONG
+                            ).setAnchorView(binding.addLocationButton)
+                                .setBackgroundTint(resources.getColor(R.color.red))
+                                .setTextColor(Color.WHITE)
+                                .show()
+                        }
                     }
                 }
             }
@@ -166,7 +184,14 @@ class LocationFragment : Fragment() {
         builder.setView(cityView.root)
             .setPositiveButton("Add") { _, _ ->
                 if (cityView.cityEditText.text.isEmpty())
-                    Toast.makeText(requireContext(), "No Entry Found!", Toast.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        binding.parentLayout,
+                        "No Entry Found",
+                        Snackbar.LENGTH_SHORT
+                    ).setAnchorView(binding.addLocationButton)
+                        .setBackgroundTint(resources.getColor(R.color.red))
+                        .setTextColor(Color.WHITE)
+                        .show()
                 else {
                     viewModel.loadCity(cityView.cityEditText.text.toString())
                 }

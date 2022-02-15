@@ -9,7 +9,7 @@ import androidx.room.Query
 @Dao
 interface LocationDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(location: Location)
+    suspend fun insert(location: Location): Long
 
     @Query("DELETE FROM location_table WHERE city_name = :cityName")
     suspend fun delete(cityName: String)

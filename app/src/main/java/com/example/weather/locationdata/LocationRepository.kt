@@ -14,9 +14,8 @@ class LocationRepository @Inject constructor(
     suspend fun currentLocation(cityName: String) =
         apiHelper.currentLocation(cityName)
 
-    suspend fun insertLocation(location: Location) {
+    suspend fun insertLocation(location: Location) =
         locationDao.insert(location)
-    }
 
     suspend fun deleteLocation(cityName: String) {
         locationDao.delete(cityName)

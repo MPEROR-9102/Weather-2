@@ -36,6 +36,8 @@ class LocationFragment : Fragment() {
     @Inject
     lateinit var weatherReceiver: WeatherReceiver
     private val viewModel by viewModels<LocationViewModel>()
+    private lateinit var commonSnackBarWhite: Snackbar
+    private lateinit var commonSnackBarRed: Snackbar
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -56,17 +58,11 @@ class LocationFragment : Fragment() {
             setOnMenuItemClickListener {
                 return@setOnMenuItemClickListener when (it.itemId) {
                     R.id.locationMenuDeleteAll -> {
-                        if (!viewModel.allLocation.value.isNullOrEmpty())
+                        if (!viewModel.allLocation.value.isNullOrEmpty()) {
                             showDeleteAllDialog()
-                        else
-                            Snackbar.make(
-                                binding.parentLayout,
-                                "No Cities To Delete",
-                                Snackbar.LENGTH_SHORT
-                            ).setAnchorView(binding.addLocationButton)
-                                .setBackgroundTint(resources.getColor(R.color.red))
-                                .setTextColor(Color.WHITE)
-                                .show()
+                        } else {
+                            commonSnackBarRed.setText("No Cities To Delete").show()
+                        }
                         true
                     }
                     else -> {
@@ -99,30 +95,24 @@ class LocationFragment : Fragment() {
                             progressBar.isVisible = true
                         }
                         Status.SUCCESS -> {
-                            Snackbar.make(
-                                binding.parentLayout,
-                                "City Added",
-                                Snackbar.LENGTH_SHORT
-                            ).setAnchorView(binding.addLocationButton)
-                                .setBackgroundTint(Color.WHITE)
-                                .setTextColor(resources.getColor(R.color.red))
-                                .show()
                             viewModel.insertLocation(resource.data!!.name)
+                                .observe(viewLifecycleOwner) { rowExists ->
+                                    if (rowExists == -1L) {
+                                        progressBar.isVisible = false
+                                        commonSnackBarRed.setText("City Already Exists").show()
+                                    } else {
+                                        commonSnackBarWhite.setText("${resource.data.name} Added")
+                                            .show()
+                                    }
+                                }
                         }
                         Status.ERROR -> {
+                            progressBar.isVisible = false
                             var statusInfo = "City Not Found"
                             if (resource.message != "HTTP 404 Not Found") {
                                 statusInfo = "Took Too Long To Respond"
                             }
-                            progressBar.isVisible = false
-                            Snackbar.make(
-                                parentLayout,
-                                statusInfo,
-                                Snackbar.LENGTH_LONG
-                            ).setAnchorView(binding.addLocationButton)
-                                .setBackgroundTint(resources.getColor(R.color.red))
-                                .setTextColor(Color.WHITE)
-                                .show()
+                            commonSnackBarRed.setText(statusInfo).show()
                         }
                     }
                 }
@@ -174,6 +164,28 @@ class LocationFragment : Fragment() {
         return binding.root
     }
 
+    override fun onStart() {
+        super.onStart()
+        commonSnackBarWhite = Snackbar.make(binding.parentLayout, "", Snackbar.LENGTH_SHORT)
+            .setAnchorView(binding.addLocationButton)
+            .setBackgroundTint(Color.WHITE)
+            .setTextColor(resources.getColor(R.color.red))
+        commonSnackBarRed = Snackbar.make(binding.parentLayout, "", Snackbar.LENGTH_SHORT)
+            .setAnchorView(binding.addLocationButton)
+            .setBackgroundTint(resources.getColor(R.color.red))
+            .setTextColor(Color.WHITE)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        context?.unregisterReceiver(weatherReceiver)
+    }
+
     private fun showLocationEntryDialog() {
         val builder = AlertDialog.Builder(requireContext())
             .setTitle("Insert a City")
@@ -183,16 +195,9 @@ class LocationFragment : Fragment() {
         )
         builder.setView(cityView.root)
             .setPositiveButton("Add") { _, _ ->
-                if (cityView.cityEditText.text.isEmpty())
-                    Snackbar.make(
-                        binding.parentLayout,
-                        "No Entry Found",
-                        Snackbar.LENGTH_SHORT
-                    ).setAnchorView(binding.addLocationButton)
-                        .setBackgroundTint(resources.getColor(R.color.red))
-                        .setTextColor(Color.WHITE)
-                        .show()
-                else {
+                if (cityView.cityEditText.text.isEmpty()) {
+                    commonSnackBarRed.setText("No Entry Found").show()
+                } else {
                     viewModel.loadCity(cityView.cityEditText.text.toString())
                 }
             }
@@ -205,6 +210,7 @@ class LocationFragment : Fragment() {
             .setTitle("Delete $cityName?")
             .setPositiveButton("Delete") { _, _ ->
                 viewModel.deleteLocation(cityName)
+                commonSnackBarWhite.setText("$cityName Deleted").show()
             }
             .setNeutralButton("Cancel") { _, _ -> }
         builder.show()
@@ -215,18 +221,9 @@ class LocationFragment : Fragment() {
             .setTitle("Delete All Cities?")
             .setPositiveButton("Delete") { _, _ ->
                 viewModel.deleteAllLocation()
+                commonSnackBarWhite.setText("All Cities Deleted").show()
             }
             .setNeutralButton("Cancel") { _, _ -> }
         builder.show()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        context?.unregisterReceiver(weatherReceiver)
     }
 }

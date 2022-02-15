@@ -60,11 +60,10 @@ class LocationViewModel @Inject constructor(
         locationList.postValue(locations)
     }
 
-    fun insertLocation(cityName: String) {
-        viewModelScope.launch(IO) {
-            weatherRepository.insertLocation(Location(cityName))
+    fun insertLocation(cityName: String) =
+        liveData {
+            emit(weatherRepository.insertLocation(Location(cityName)))
         }
-    }
 
     fun deleteLocation(cityName: String) {
         viewModelScope.launch(IO) {

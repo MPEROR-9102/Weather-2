@@ -3,4 +3,5 @@
     <string name="contentDesc">TODO</string>
     <string name="locationMenuClearAllTitle">Delete All</string>
     <string name="no_city_data">No City Data To Show</string>
+    <string name="center_full_stop">.</string>
 </resources>

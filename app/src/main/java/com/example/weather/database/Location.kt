@@ -8,5 +8,5 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "location_table", indices = [Index(value = ["city_name"], unique = true)])
 data class Location(
     @ColumnInfo(name = "city_name") val cityName: String,
-    @PrimaryKey(autoGenerate = true) val id: Int? = null
+    @PrimaryKey(autoGenerate = true) val id: Int = 0
 )

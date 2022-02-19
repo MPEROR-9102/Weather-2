@@ -11,8 +11,7 @@ import com.example.weather.api.LocationResponse
 import com.example.weather.databinding.LocationViewLayoutBinding
 
 class LocationAdapter(
-    private val ClickHandler: (LocationResponse) -> Unit,
-    private val LongClickHandler: (LocationResponse) -> Unit
+    private val itemListener: ItemListener
 ) : ListAdapter<LocationResponse, LocationAdapter.LocationViewHolder>(DIFF_CONFIG) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationViewHolder {
@@ -33,20 +32,14 @@ class LocationAdapter(
                 setOnClickListener {
                     val position = adapterPosition
                     if (position != RecyclerView.NO_POSITION) {
-                        val item = getItem(position)
-                        if (item != null) {
-                            ClickHandler(item)
-                        }
+                        itemListener.onItemClick(getItem(position))
                     }
                 }
 
                 setOnLongClickListener {
                     val position = adapterPosition
                     if (position != RecyclerView.NO_POSITION) {
-                        val item = getItem(position)
-                        if (item != null) {
-                            LongClickHandler(item)
-                        }
+                        itemListener.onItemLongClick(getItem(position))
                     }
                     return@setOnLongClickListener true
                 }
@@ -64,6 +57,11 @@ class LocationAdapter(
                 mainTextView.text = location.weather[0].main
             }
         }
+    }
+
+    interface ItemListener {
+        fun onItemClick(location: LocationResponse)
+        fun onItemLongClick(location: LocationResponse)
     }
 
     companion object {

@@ -41,7 +41,6 @@ object AppModule {
         ).build()
 
     @Provides
-    @Singleton
     fun provideDao(locationDatabase: LocationDatabase): LocationDao =
         locationDatabase.getLocationDao()
 }

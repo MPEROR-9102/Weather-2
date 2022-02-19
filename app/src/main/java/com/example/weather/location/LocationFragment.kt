@@ -1,11 +1,8 @@
 package com.example.weather.location
 
 import android.app.AlertDialog
-import android.content.Context
-import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -30,7 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class LocationFragment : Fragment() {
+class LocationFragment : Fragment(), LocationAdapter.ItemListener {
 
     private var _binding: FragmentLocationBinding? = null
     private val binding get() = _binding!!
@@ -40,14 +37,6 @@ class LocationFragment : Fragment() {
     private val viewModel by viewModels<LocationViewModel>()
     private lateinit var commonSnackBarWhite: Snackbar
     private lateinit var commonSnackBarRed: Snackbar
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        context.registerReceiver(
-            weatherReceiver,
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        )
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -74,9 +63,7 @@ class LocationFragment : Fragment() {
             }
         }
 
-        val locationAdapter = LocationAdapter(itemClickHandler) { location ->
-            showDeleteDialog(location.name)
-        }
+        val locationAdapter = LocationAdapter(this)
         binding.apply {
             locationsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
             val itemDecoration = DividerItemDecoration(requireContext(), LinearLayout.VERTICAL)
@@ -112,7 +99,7 @@ class LocationFragment : Fragment() {
                             progressBar.isVisible = false
                             var statusInfo = "City Not Found"
                             if (resource.message != "HTTP 404 Not Found") {
-                                statusInfo = "Took Too Long To Respond"
+                                statusInfo = "Error Loading Cities"
                             }
                             commonSnackBarRed.setText(statusInfo).show()
                         }
@@ -175,12 +162,10 @@ class LocationFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        commonSnackBarWhite = Snackbar.make(binding.parentLayout, "", Snackbar.LENGTH_SHORT)
-            .setAnchorView(binding.addLocationButton)
+        commonSnackBarWhite = Snackbar.make(requireView(), "", Snackbar.LENGTH_SHORT)
             .setBackgroundTint(Color.WHITE)
             .setTextColor(resources.getColor(R.color.red))
-        commonSnackBarRed = Snackbar.make(binding.parentLayout, "", Snackbar.LENGTH_SHORT)
-            .setAnchorView(binding.addLocationButton)
+        commonSnackBarRed = Snackbar.make(requireView(), "", Snackbar.LENGTH_SHORT)
             .setBackgroundTint(resources.getColor(R.color.red))
             .setTextColor(Color.WHITE)
     }
@@ -190,9 +175,19 @@ class LocationFragment : Fragment() {
         _binding = null
     }
 
-    override fun onDetach() {
-        super.onDetach()
-        context?.unregisterReceiver(weatherReceiver)
+    override fun onItemClick(location: LocationResponse) {
+        Toast.makeText(requireContext(), location.name, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onItemLongClick(location: LocationResponse) {
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle("Delete ${location.name}?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteLocation(location.name)
+                commonSnackBarWhite.setText("${location.name} Deleted").show()
+            }
+            .setNeutralButton("Cancel") { _, _ -> }
+        builder.show()
     }
 
     private fun showLocationEntryDialog() {
@@ -214,17 +209,6 @@ class LocationFragment : Fragment() {
             .show()
     }
 
-    private fun showDeleteDialog(cityName: String) {
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle("Delete $cityName?")
-            .setPositiveButton("Delete") { _, _ ->
-                viewModel.deleteLocation(cityName)
-                commonSnackBarWhite.setText("$cityName Deleted").show()
-            }
-            .setNeutralButton("Cancel") { _, _ -> }
-        builder.show()
-    }
-
     private fun showDeleteAllDialog() {
         val builder = AlertDialog.Builder(requireContext())
             .setTitle("Delete All Cities?")
@@ -234,9 +218,5 @@ class LocationFragment : Fragment() {
             }
             .setNeutralButton("Cancel") { _, _ -> }
         builder.show()
-    }
-
-    private val itemClickHandler = fun(locationResponse: LocationResponse) {
-        Toast.makeText(requireContext(), locationResponse.name, Toast.LENGTH_LONG).show()
     }
 }

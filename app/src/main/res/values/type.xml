@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="TextAppearance.Design.CollapsingToolbar.Expanded" parent="TextAppearance.AppCompat.Display1">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+    </style>
+
+    <style name="TextAppearance.Design.CollapsingToolbar.Collapsed" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+    </style>
+
+</resources>

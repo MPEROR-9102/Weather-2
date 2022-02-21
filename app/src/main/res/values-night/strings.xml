@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Weather</string>
-    <string name="contentDesc">TODO</string>
-    <string name="locationMenuClearAllTitle">Delete All</string>
+    <string name="content_desc">TODO</string>
+    <string name="delete_all_action_title">Delete All</string>
     <string name="no_city_data">No City Data To Show</string>
+    <string name="center_full_stop">.</string>
+    <string name="settings_action_title">Settings</string>
+    <string name="cities_action_title">Cities</string>
 </resources>

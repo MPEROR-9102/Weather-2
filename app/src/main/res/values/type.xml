@@ -2,11 +2,11 @@
 <resources>
 
     <style name="TextAppearance.Design.CollapsingToolbar.Expanded" parent="TextAppearance.AppCompat.Display1">
-        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:textColor">@color/white</item>
     </style>
 
-    <style name="TextAppearance.Design.CollapsingToolbar.Collapsed" parent="TextAppearance.MaterialComponents.Headline5">
-        <item name="android:textColor">?attr/colorOnPrimary</item>
+    <style name="TextAppearance.Design.CollapsingToolbar.Collapsed" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textColor">@color/white</item>
     </style>
 
 </resources>

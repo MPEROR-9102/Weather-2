@@ -10,26 +10,27 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="128dp"
+        android:background="@color/black"
         app:liftOnScroll="true">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:collapsedTitleTextAppearance="@style/TextAppearance.Design.CollapsingToolbar.Collapsed"
-            app:contentScrim="?attr/colorPrimary"
             app:expandedTitleMarginBottom="28dp"
             app:expandedTitleMarginStart="28dp"
             app:expandedTitleTextAppearance="@style/TextAppearance.Design.CollapsingToolbar.Expanded"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
-            tools:title="@string/app_name">
+            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/currentWeatherToolbar"
-                style="@style/Widget.MaterialComponents.Toolbar.Primary"
+                style="@style/Widget.MaterialComponents.Toolbar.PrimarySurface"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
+                android:background="@color/black"
                 app:layout_collapseMode="pin"
-                app:menu="@menu/current_weather_menu" />
+                app:menu="@menu/current_weather_menu"
+                app:title="@string/app_name" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 

@@ -1,18 +1,21 @@
 package com.example.weather.location
 
 import androidx.lifecycle.*
+import com.example.weather.PreferenceManager
 import com.example.weather.api.LocationResponse
 import com.example.weather.api.Resource
 import com.example.weather.database.Location
 import com.example.weather.locationdata.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class LocationViewModel @Inject constructor(
-    private val weatherRepository: LocationRepository
+    private val weatherRepository: LocationRepository,
+    private val preferenceManager: PreferenceManager
 ) : ViewModel() {
 
     private val cityNameData: MutableLiveData<String> = MutableLiveData()
@@ -76,4 +79,13 @@ class LocationViewModel @Inject constructor(
             weatherRepository.deleteAllLocation()
         }
     }
+
+    fun onLocationSelected(location: String) {
+        updateCurrentLocation(location)
+    }
+
+    private fun updateCurrentLocation(location: String) =
+        GlobalScope.launch {
+            preferenceManager.updateCurrentLocation(location)
+        }
 }

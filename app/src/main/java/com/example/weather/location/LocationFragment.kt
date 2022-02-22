@@ -177,6 +177,7 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
     }
 
     override fun onItemClick(location: LocationResponse) {
+        viewModel.onLocationSelected(location.name)
         setFragmentResult(
             "currentLocation",
             bundleOf("location" to location.name)

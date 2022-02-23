@@ -1,7 +1,5 @@
 package com.example.weather.api
 
-import com.example.weather.locationdata.LocationDetails
-
 data class LocationResponse(
     val name: String,
     val main: Temperature,
@@ -14,5 +12,10 @@ data class LocationResponse(
 
     data class Nationality(
         val country: String
+    )
+
+    data class LocationDetails(
+        val main: String,
+        val icon: String
     )
 }

@@ -7,12 +7,12 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.example.weather.api.LocationResponse
+import com.example.weather.database.Location
 import com.example.weather.databinding.LocationViewLayoutBinding
 
 class LocationAdapter(
     private val itemListener: ItemListener
-) : ListAdapter<LocationResponse, LocationAdapter.LocationViewHolder>(DIFF_CONFIG) {
+) : ListAdapter<Location, LocationAdapter.LocationViewHolder>(DIFF_CONFIG) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LocationViewHolder {
         val binding =
@@ -46,36 +46,36 @@ class LocationAdapter(
             }
         }
 
-        fun bind(location: LocationResponse) {
+        fun bind(location: Location) {
             binding.apply {
                 Glide.with(root)
-                    .load("http://openweathermap.org/img/wn/${location.weather[0].icon}@2x.png")
+                    .load("http://openweathermap.org/img/wn/${location.iconId}@2x.png")
                     .transition(DrawableTransitionOptions.withCrossFade())
                     .into(iconImageView)
-                locationTextView.text = location.name
-                tempTextView.text = String.format("%.0f°", location.main.temp)
-                mainTextView.text = location.weather[0].main
+                locationTextView.text = location.cityName
+                tempTextView.text = String.format("%.0f°", location.temp)
+                mainTextView.text = location.main
             }
         }
     }
 
     interface ItemListener {
-        fun onItemClick(location: LocationResponse)
-        fun onItemLongClick(location: LocationResponse)
+        fun onItemClick(location: Location)
+        fun onItemLongClick(location: Location)
     }
 
     companion object {
-        val DIFF_CONFIG = object : DiffUtil.ItemCallback<LocationResponse>() {
+        val DIFF_CONFIG = object : DiffUtil.ItemCallback<Location>() {
             override fun areItemsTheSame(
-                oldItem: LocationResponse,
-                newItem: LocationResponse
+                oldItem: Location,
+                newItem: Location
             ): Boolean {
-                return oldItem.name == newItem.name
+                return oldItem.id == newItem.id
             }
 
             override fun areContentsTheSame(
-                oldItem: LocationResponse,
-                newItem: LocationResponse
+                oldItem: Location,
+                newItem: Location
             ): Boolean {
                 return oldItem == newItem
             }

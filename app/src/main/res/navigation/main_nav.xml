@@ -18,4 +18,11 @@
             android:id="@+id/action_weatherFragment2_to_locationFragment"
             app:destination="@id/locationFragment" />
     </fragment>
+    <dialog
+        android:id="@+id/locationEntryDialogFragment"
+        android:name="com.example.weather.locationentry.LocationEntryDialogFragment"
+        android:label="LocationEntryDialogFragment" />
+    <action
+        android:id="@+id/action_global_locationEntryDialogFragment"
+        app:destination="@id/locationEntryDialogFragment" />
 </navigation>

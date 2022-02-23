@@ -8,24 +8,34 @@
     tools:context=".location.LocationFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/noCityDataLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:visibility="gone"
+        tools:visibility="visible">
 
-        <TextView
-            android:id="@+id/noCityDataTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/no_city_data"
-            android:textAppearance="@style/TextAppearance.AppCompat.Large"
-            android:textColor="@color/white"
-            android:visibility="gone"
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="@string/content_desc"
+            android:src="@drawable/ic_baseline_chalet_24"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias=".3"
-            tools:visibility="visible" />
+            app:layout_constraintVertical_bias=".3" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_city_2"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imageView" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

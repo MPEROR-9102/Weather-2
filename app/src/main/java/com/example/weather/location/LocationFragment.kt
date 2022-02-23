@@ -1,6 +1,5 @@
 package com.example.weather.location
 
-import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -8,24 +7,31 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weather.R
 import com.example.weather.WeatherReceiver
-import com.example.weather.api.LocationResponse
 import com.example.weather.api.Status
-import com.example.weather.databinding.EdittextLayoutBinding
+import com.example.weather.database.Location
 import com.example.weather.databinding.FragmentLocationBinding
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import javax.inject.Inject
+
+enum class SnackBarType {
+    RED, WHITE
+}
 
 @AndroidEntryPoint
 class LocationFragment : Fragment(), LocationAdapter.ItemListener {
@@ -36,8 +42,9 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
     @Inject
     lateinit var weatherReceiver: WeatherReceiver
     private val viewModel by viewModels<LocationViewModel>()
-    private lateinit var commonSnackBarWhite: Snackbar
-    private lateinit var commonSnackBarRed: Snackbar
+
+    private var network: Boolean = false
+    private lateinit var locationAdapter: LocationAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,184 +52,150 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
     ): View? {
         _binding = FragmentLocationBinding.inflate(inflater, container, false)
 
-        binding.locationToolbar.apply {
-            setupWithNavController(findNavController())
-            setOnMenuItemClickListener {
-                return@setOnMenuItemClickListener when (it.itemId) {
-                    R.id.deleteAllAction -> {
-                        if (!viewModel.allLocation.value.isNullOrEmpty()) {
-                            showDeleteAllDialog()
-                        } else {
-                            commonSnackBarRed.setText("No Cities To Delete").show()
+        binding.apply {
+            locationToolbar.apply {
+                setupWithNavController(findNavController())
+                setOnMenuItemClickListener {
+                    return@setOnMenuItemClickListener when (it.itemId) {
+                        R.id.deleteAllAction -> {
+                            viewModel.onDeleteAllActionClicked()
+                            true
                         }
-                        true
-                    }
-                    else -> {
-                        false
+                        else -> {
+                            false
+                        }
                     }
                 }
             }
-        }
 
-        val locationAdapter = LocationAdapter(this)
-        binding.apply {
-            locationsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-            val itemDecoration = DividerItemDecoration(requireContext(), LinearLayout.VERTICAL)
-            itemDecoration.setDrawable(ColorDrawable(requireContext().resources.getColor(R.color.white)))
-            locationsRecyclerView.addItemDecoration(itemDecoration)
-            locationsRecyclerView.adapter = locationAdapter
+            locationAdapter = LocationAdapter(this@LocationFragment)
+            locationsRecyclerView.apply {
+                layoutManager = LinearLayoutManager(requireContext())
+                adapter = locationAdapter
+
+                val itemDecoration = DividerItemDecoration(requireContext(), LinearLayout.VERTICAL)
+                itemDecoration.setDrawable(ColorDrawable(requireContext().resources.getColor(R.color.white)))
+                addItemDecoration(itemDecoration)
+            }
 
             addLocationButton.setOnClickListener {
-                showLocationEntryDialog()
+                viewModel.onAddLocationClicked()
             }
         }
 
-        viewModel.currentLocation.observe(viewLifecycleOwner) {
-            it.let { resource ->
-                binding.apply {
-                    when (resource.status) {
-                        Status.LOADING -> {
-                            progressBar.isVisible = true
-                        }
-                        Status.SUCCESS -> {
-                            viewModel.insertLocation(resource.data!!.name)
-                                .observe(viewLifecycleOwner) { rowExists ->
-                                    if (rowExists == -1L) {
-                                        progressBar.isVisible = false
-                                        commonSnackBarRed.setText("City Already Exists").show()
-                                    } else {
-                                        commonSnackBarWhite.setText("${resource.data.name} Added")
-                                            .show()
-                                    }
-                                }
-                        }
-                        Status.ERROR -> {
-                            progressBar.isVisible = false
-                            var statusInfo = "City Not Found"
-                            if (resource.message != "HTTP 404 Not Found") {
-                                statusInfo = "Error Loading Cities"
+        setFragmentResultListener("locationEntry") { _, bundle ->
+            val location = bundle.get("addedLocation") as String
+            viewModel.onLocationEntered(location)
+        }
+
+        viewModel.allLocation.observe(viewLifecycleOwner) {
+            binding.apply {
+                if (it.isNullOrEmpty()) {
+                    noCityDataLayout.isVisible = true
+                    locationsRecyclerView.isVisible = false
+                } else {
+                    noCityDataLayout.isVisible = false
+                    locationAdapter.submitList(it)
+                    binding.locationsRecyclerView.isVisible = true
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewModel.locationEvent.collect { event ->
+                when (event) {
+                    is LocationViewModel.LocationEvent.ShowDeleteAllConfirmationScreen -> {
+                        AlertDialog.Builder(requireContext())
+                            .setTitle(event.title)
+                            .setPositiveButton("Delete") { _, _ ->
+                                viewModel.onDeleteAllConfirmationClicked()
                             }
-                            commonSnackBarRed.setText(statusInfo).show()
+                            .setNeutralButton("Cancel", null)
+                            .show()
+                    }
+                    LocationViewModel.LocationEvent.ShowLocationEntryScreen -> {
+                        val action =
+                            LocationFragmentDirections.actionGlobalLocationEntryDialogFragment()
+                        findNavController().navigate(action)
+                    }
+                    is LocationViewModel.LocationEvent.ShowLocationMessage -> {
+                        binding.apply {
+                            when (event.type) {
+                                SnackBarType.RED -> {
+                                    Snackbar.make(
+                                        requireView(),
+                                        event.message,
+                                        Snackbar.LENGTH_SHORT
+                                    )
+                                        .setBackgroundTint(resources.getColor(R.color.red))
+                                        .setTextColor(Color.WHITE)
+                                        .show()
+                                }
+                                SnackBarType.WHITE -> {
+                                    Snackbar.make(
+                                        requireView(),
+                                        event.message,
+                                        Snackbar.LENGTH_SHORT
+                                    )
+                                        .setBackgroundTint(Color.WHITE)
+                                        .setTextColor(resources.getColor(R.color.red))
+                                        .show()
+                                }
+                            }
                         }
                     }
-                }
-            }
-        }
-
-        viewModel.allLocation.observe(viewLifecycleOwner) { locationList ->
-            binding.apply {
-                if (locationList.isNotEmpty()) {
-                    noCityDataTextView.isVisible = false
-                    viewModel.loadLocationList(locationList)
-                } else {
-                    noCityDataTextView.isVisible = true
-                    locationsRecyclerView.isVisible = false
-                }
-            }
-        }
-
-        viewModel.locationListData.observe(viewLifecycleOwner) {
-            it?.let { resource ->
-                binding.progressBar.apply {
-                    when (resource.status) {
-                        Status.LOADING -> {
-                            isVisible = true
+                    is LocationViewModel.LocationEvent.ShowCurrentLoadingStatus -> {
+                        binding.apply {
+                            when (event.status) {
+                                Status.LOADING -> progressBar.isVisible = true
+                                Status.SUCCESS -> progressBar.isVisible = false
+                                Status.ERROR -> progressBar.isVisible = false
+                            }
                         }
-                        Status.SUCCESS -> {
-                            isVisible = false
-                            binding.locationsRecyclerView.isVisible = true
-                            locationAdapter.submitList(resource.data)
-                        }
-                        Status.ERROR -> {
-                            isVisible = false
-                            binding.locationsRecyclerView.isVisible = false
-                        }
+                    }
+                    is LocationViewModel.LocationEvent.ShowCurrentWeatherScreen -> {
+                        setFragmentResult(
+                            "currentLocation",
+                            bundleOf("location" to event.location)
+                        )
+                        findNavController().popBackStack()
+                    }
+                    is LocationViewModel.LocationEvent.ShowDeleteConfirmationScreen -> {
+                        AlertDialog.Builder(requireContext())
+                            .setTitle(event.title)
+                            .setPositiveButton("Delete") { _, _ ->
+                                viewModel.onDeleteConfirmationClicked(event.location)
+                            }
+                            .setNeutralButton("Cancel", null)
+                            .show()
+                    }
+                    is LocationViewModel.LocationEvent.PerformOnNetworkChangeModification -> {
+                        network = !event.noNetwork
+                        binding.addLocationButton.isVisible = !event.noNetwork
                     }
                 }
             }
         }
 
         weatherReceiver.noConnectivity.observe(viewLifecycleOwner) {
-            when (it) {
-                true -> {
-                    binding.addLocationButton.isVisible = false
-                }
-                false -> {
-                    if (!binding.locationsRecyclerView.isVisible &&
-                        !viewModel.allLocation.value.isNullOrEmpty()
-                    ) {
-                        viewModel.loadLocationList(viewModel.allLocation.value!!)
-                    }
-                    binding.addLocationButton.isVisible = true
-                }
-            }
+            viewModel.onNetworkChanged(it)
         }
 
         return binding.root
     }
 
-    override fun onStart() {
-        super.onStart()
-        commonSnackBarWhite = Snackbar.make(requireView(), "", Snackbar.LENGTH_SHORT)
-            .setBackgroundTint(Color.WHITE)
-            .setTextColor(resources.getColor(R.color.red))
-        commonSnackBarRed = Snackbar.make(requireView(), "", Snackbar.LENGTH_SHORT)
-            .setBackgroundTint(resources.getColor(R.color.red))
-            .setTextColor(Color.WHITE)
+    override fun onItemClick(location: Location) {
+        if (network) {
+            viewModel.onLocationClicked(location.cityName)
+        }
+    }
+
+    override fun onItemLongClick(location: Location) {
+        viewModel.onLocationLongClicked(location)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    override fun onItemClick(location: LocationResponse) {
-        viewModel.onLocationSelected(location.name)
-        setFragmentResult(
-            "currentLocation",
-            bundleOf("location" to location.name)
-        )
-        findNavController().popBackStack()
-    }
-
-    override fun onItemLongClick(location: LocationResponse) {
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle("Delete ${location.name}?")
-            .setPositiveButton("Delete") { _, _ ->
-                viewModel.deleteLocation(location.name)
-                commonSnackBarWhite.setText("${location.name} Deleted").show()
-            }
-            .setNeutralButton("Cancel") { _, _ -> }
-        builder.show()
-    }
-
-    private fun showLocationEntryDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle("Insert a City")
-        val cityView = EdittextLayoutBinding.inflate(
-            LayoutInflater.from(requireContext()),
-            null, false
-        )
-        builder.setView(cityView.root)
-            .setPositiveButton("Add") { _, _ ->
-                if (cityView.cityEditText.text.isEmpty()) {
-                    commonSnackBarRed.setText("No Entry Found").show()
-                } else {
-                    viewModel.loadCity(cityView.cityEditText.text.toString())
-                }
-            }
-            .setNeutralButton("Cancel") { _, _ -> }
-            .show()
-    }
-
-    private fun showDeleteAllDialog() {
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle("Delete All Cities?")
-            .setPositiveButton("Delete") { _, _ ->
-                viewModel.deleteAllLocation()
-                commonSnackBarWhite.setText("All Cities Deleted").show()
-            }
-            .setNeutralButton("Cancel") { _, _ -> }
-        builder.show()
     }
 }

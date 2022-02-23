@@ -1,7 +1,9 @@
 package com.example.weather.currentweather
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
@@ -14,7 +16,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class WeatherFragment : Fragment(R.layout.fragment_weather) {
@@ -25,22 +27,29 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentWeatherBinding.bind(view)
 
-        binding.apply {
-            currentWeatherToolbar.apply {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val currentLocation = viewModel.preferencesFlow.first().currentLocation
-                    title = currentLocation.ifBlank { "Weather" }
-                    swipeToRefresh.isEnabled = currentLocation.isNotBlank()
+        runBlocking {
+            binding.currentWeatherToolbar.title =
+                viewModel.preferencesFlow.first().currentLocation.ifBlank {
+                    resources.getString(R.string.app_name)
                 }
+        }
 
-                setOnMenuItemClickListener { item ->
-                    return@setOnMenuItemClickListener when (item.itemId) {
-                        R.id.citiesAction -> {
-                            viewModel.onCitiesActionClicked()
-                            true
-                        }
-                        else -> false
+        binding.apply {
+            viewModel.allLocation.observe(viewLifecycleOwner) {
+                noCityDataLayout.isVisible = it.isNullOrEmpty()
+            }
+            viewModel.preferences.observe(viewLifecycleOwner) {
+                scrollLayout.isNestedScrollingEnabled = it.currentLocation.isNotBlank()
+                swipeToRefresh.isEnabled = it.currentLocation.isNotBlank()
+            }
+
+            currentWeatherToolbar.setOnMenuItemClickListener { item ->
+                return@setOnMenuItemClickListener when (item.itemId) {
+                    R.id.citiesAction -> {
+                        viewModel.onCitiesActionClicked()
+                        true
                     }
+                    else -> false
                 }
             }
             swipeToRefresh.apply {
@@ -74,9 +83,17 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                     is WeatherViewModel.WeatherForecastEvents.DisplayWeatherData -> {
                         Snackbar.make(
                             requireView(),
-                            event.locationResponse.name,
+                            "${event.locationData.name} - ${event.locationData.main.temp}",
                             Snackbar.LENGTH_SHORT
-                        ).show()
+                        ).setBackgroundTint(Color.WHITE)
+                            .setTextColor(resources.getColor(R.color.red))
+                            .show()
+                    }
+                    is WeatherViewModel.WeatherForecastEvents.ShowUnableToLoadMessage -> {
+                        Snackbar.make(requireView(), event.message, Snackbar.LENGTH_SHORT)
+                            .setBackgroundTint(resources.getColor(R.color.red))
+                            .setTextColor(Color.WHITE)
+                            .show()
                     }
                 }
             }

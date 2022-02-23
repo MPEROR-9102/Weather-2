@@ -1,91 +1,191 @@
 package com.example.weather.location
 
-import androidx.lifecycle.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.weather.PreferenceManager
-import com.example.weather.api.LocationResponse
-import com.example.weather.api.Resource
+import com.example.weather.api.ApiHelper
+import com.example.weather.api.Status
 import com.example.weather.database.Location
-import com.example.weather.locationdata.LocationRepository
+import com.example.weather.database.LocationDao
+import com.example.weather.di.ApplicationScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TAG = "LocationViewModel"
+
 @HiltViewModel
 class LocationViewModel @Inject constructor(
-    private val weatherRepository: LocationRepository,
-    private val preferenceManager: PreferenceManager
+    @ApplicationScope private val applicationScope: CoroutineScope,
+    private val apiHelper: ApiHelper,
+    private val preferenceManager: PreferenceManager,
+    private val locationDao: LocationDao
 ) : ViewModel() {
 
-    private val cityNameData: MutableLiveData<String> = MutableLiveData()
-    val currentLocation = cityNameData.switchMap {
-        liveData {
-            emit(Resource.loading(data = null))
-            try {
-                emit(Resource.success(data = weatherRepository.currentLocation(it)))
-            } catch (exception: Exception) {
-                emit(
-                    Resource.error(
-                        data = null,
-                        message = exception.message ?: "Error Loading Data"
+    private val locationEventChannel = Channel<LocationEvent>()
+    val locationEvent = locationEventChannel.receiveAsFlow()
+
+    private val allLocationFlow = locationDao.getAll()
+    val allLocation = allLocationFlow.asLiveData()
+
+    init {
+//        Log.e(TAG, "Init: LocationViewModel")
+    }
+
+    private fun showLocationMessage(type: SnackBarType, message: String) =
+        viewModelScope.launch {
+            locationEventChannel.send(
+                LocationEvent.ShowLocationMessage(type, message)
+            )
+        }
+
+    fun onDeleteAllActionClicked() {
+        deleteAllConfirmation()
+    }
+
+    private fun deleteAllConfirmation() =
+        viewModelScope.launch {
+            if (allLocationFlow.first().isNullOrEmpty()) {
+                showLocationMessage(SnackBarType.RED, "No Cities To Delete")
+            } else {
+                locationEventChannel.send(
+                    LocationEvent.ShowDeleteAllConfirmationScreen(
+                        "Delete All Cities?"
                     )
                 )
             }
         }
+
+    fun onDeleteAllConfirmationClicked() {
+        deleteAllLocations()
     }
-    val allLocation = weatherRepository.getAllLocations()
-    private val locationList: MutableLiveData<List<Location>> = MutableLiveData()
-    val locationListData = locationList.switchMap { locations ->
-        liveData {
-            emit(Resource.loading(data = null))
+
+    private fun deleteAllLocations() =
+        viewModelScope.launch {
+            locationDao.deleteAll()
+            preferenceManager.updateCurrentLocation("")
+            showLocationMessage(SnackBarType.WHITE, "All Cities Deleted")
+        }
+
+    fun onAddLocationClicked() {
+        showLocationEntryScreen()
+    }
+
+    private fun showLocationEntryScreen() =
+        viewModelScope.launch {
+            locationEventChannel.send(LocationEvent.ShowLocationEntryScreen)
+        }
+
+    fun onLocationEntered(location: String) {
+        if (location.isNotBlank()) {
+            loadAndInsertLocationData(location)
+        } else {
+            showLocationMessage(SnackBarType.RED, "No Entry Found")
+        }
+    }
+
+    private fun loadAndInsertLocationData(location: String) =
+        viewModelScope.launch {
+            locationEventChannel.send(LocationEvent.ShowCurrentLoadingStatus(Status.LOADING))
             try {
-                val locationData: MutableList<LocationResponse> = mutableListOf()
-                for (location in locations)
-                    locationData.add(weatherRepository.currentLocation(location.cityName))
-                emit(Resource.success(data = locationData))
+                val locationData = apiHelper.currentLocation(location)
+                locationEventChannel.send(LocationEvent.ShowCurrentLoadingStatus(Status.SUCCESS))
+                if (locationDao.insert(
+                        Location(
+                            locationData.name,
+                            locationData.main.temp,
+                            locationData.weather[0].main,
+                            locationData.weather[0].icon
+                        )
+                    ) == -1L
+                ) {
+                    showLocationMessage(SnackBarType.RED, "City Already Exists")
+                } else {
+                    showLocationMessage(SnackBarType.WHITE, "${locationData.name} Added")
+                }
             } catch (exception: Exception) {
-                emit(
-                    Resource.error(
-                        data = null,
-                        message = exception.message ?: "Error loading data"
-                    )
-                )
+                locationEventChannel.send(LocationEvent.ShowCurrentLoadingStatus(Status.ERROR))
+                if (exception.message == "HTTP 404 Not Found") {
+                    showLocationMessage(SnackBarType.RED, "City Not Found")
+                } else {
+                    showLocationMessage(SnackBarType.RED, "Something Went Wrong")
+                }
             }
         }
-    }
 
-    fun loadCity(cityName: String) {
-        cityNameData.postValue(cityName)
-    }
-
-    fun loadLocationList(locations: List<Location>) {
-        locationList.postValue(locations)
-    }
-
-    fun insertLocation(cityName: String) =
-        liveData {
-            emit(weatherRepository.insertLocation(Location(cityName)))
-        }
-
-    fun deleteLocation(cityName: String) {
-        viewModelScope.launch(IO) {
-            weatherRepository.deleteLocation(cityName)
-        }
-    }
-
-    fun deleteAllLocation() {
-        viewModelScope.launch(IO) {
-            weatherRepository.deleteAllLocation()
-        }
-    }
-
-    fun onLocationSelected(location: String) {
+    fun onLocationClicked(location: String) {
         updateCurrentLocation(location)
     }
 
     private fun updateCurrentLocation(location: String) =
-        GlobalScope.launch {
+        applicationScope.launch {
             preferenceManager.updateCurrentLocation(location)
+            locationEventChannel.send(LocationEvent.ShowCurrentWeatherScreen(location))
         }
+
+    fun onLocationLongClicked(location: Location) {
+        deleteConfirmation(location)
+    }
+
+    private fun deleteConfirmation(location: Location) =
+        viewModelScope.launch {
+            locationEventChannel.send(
+                LocationEvent.ShowDeleteConfirmationScreen(
+                    "Delete ${location.cityName}?",
+                    location
+                )
+            )
+        }
+
+    fun onDeleteConfirmationClicked(location: Location) {
+        deleteLocation(location)
+    }
+
+    private fun deleteLocation(location: Location) =
+        viewModelScope.launch {
+            locationDao.delete(location)
+            if (location.cityName == preferenceManager.preferencesFlow.first().currentLocation) {
+//                Log.d(TAG, "deleteLocation: Same")
+                val locationList = allLocationFlow.first()
+                if (locationList.isNullOrEmpty()) {
+//                    Log.d(TAG, "deleteLocation: 1")
+                    preferenceManager.updateCurrentLocation("")
+                } else {
+//                    Log.d(TAG, "deleteLocation: 2")
+                    preferenceManager.updateCurrentLocation(locationList[0].cityName)
+//                    Log.d(TAG, "deleteLocation: ${locationList[0].cityName}")
+                }
+            } else {
+//                Log.d(TAG, "deleteLocation: Not Same")
+            }
+            showLocationMessage(SnackBarType.WHITE, "${location.cityName} Deleted")
+        }
+
+    fun onNetworkChanged(status: Boolean) {
+        performOnNetworkChangeModification(status)
+    }
+
+    private fun performOnNetworkChangeModification(status: Boolean) =
+        viewModelScope.launch {
+            locationEventChannel.send(LocationEvent.PerformOnNetworkChangeModification(status))
+        }
+
+    sealed class LocationEvent {
+        data class ShowDeleteAllConfirmationScreen(val title: String) : LocationEvent()
+        object ShowLocationEntryScreen : LocationEvent()
+        data class ShowLocationMessage(val type: SnackBarType, val message: String) :
+            LocationEvent()
+
+        data class ShowCurrentLoadingStatus(val status: Status) : LocationEvent()
+        data class ShowCurrentWeatherScreen(val location: String) : LocationEvent()
+        data class ShowDeleteConfirmationScreen(val title: String, val location: Location) :
+            LocationEvent()
+
+        data class PerformOnNetworkChangeModification(val noNetwork: Boolean) : LocationEvent()
+    }
 }

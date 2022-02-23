@@ -3,7 +3,8 @@
     <string name="app_name">Weather</string>
     <string name="content_desc">TODO</string>
     <string name="delete_all_action_title">Delete All</string>
-    <string name="no_city_data">No City Data To Show</string>
+    <string name="no_city_1">No City Data To Show,\n Add Your City</string>
+    <string name="no_city_2">No Cities</string>
     <string name="center_full_stop">.</string>
     <string name="settings_action_title">Settings</string>
     <string name="cities_action_title">Cities</string>

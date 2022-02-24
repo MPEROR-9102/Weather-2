@@ -15,4 +15,13 @@ interface OpenWeatherMapApi {
         @Query("units") unit: String,
         @Query("appid") apiKey: String
     ): LocationResponse
+
+    @GET("data/2.5/onecall")
+    suspend fun currentWeather(
+        @Query("lat") latitude: Float,
+        @Query("lon") longitude: Float,
+        @Query("appid") apiKey: String,
+        @Query("exclude") exclude: String,
+        @Query("units") unit: String
+    ): WeatherResponse
 }

@@ -23,6 +23,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".datarequest.WeatherForecastServiceOne"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".datarequest.WeatherForecastServiceTwo"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 
 </manifest>

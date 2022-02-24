@@ -1,9 +1,7 @@
 package com.example.weather.location
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
-import com.example.weather.PreferenceManager
+import androidx.lifecycle.*
+import com.example.weather.*
 import com.example.weather.api.ApiHelper
 import com.example.weather.api.Status
 import com.example.weather.database.Location
@@ -19,9 +17,19 @@ import javax.inject.Inject
 
 private const val TAG = "LocationViewModel"
 
+enum class SendType {
+    ADD, UPDATE
+}
+
+data class SendTypeModel(
+    var type: SendType,
+    var location: String
+)
+
 @HiltViewModel
 class LocationViewModel @Inject constructor(
     @ApplicationScope private val applicationScope: CoroutineScope,
+    weatherReceiver: WeatherReceiver,
     private val apiHelper: ApiHelper,
     private val preferenceManager: PreferenceManager,
     private val locationDao: LocationDao
@@ -32,6 +40,14 @@ class LocationViewModel @Inject constructor(
 
     private val allLocationFlow = locationDao.getAll()
     val allLocation = allLocationFlow.asLiveData()
+
+    private var sendType = SendTypeModel(SendType.UPDATE, "")
+
+    val connection = weatherReceiver.noConnectivity.switchMap {
+        liveData {
+            emit(!it)
+        }
+    }
 
     init {
 //        Log.e(TAG, "Init: LocationViewModel")
@@ -90,7 +106,7 @@ class LocationViewModel @Inject constructor(
     }
 
     private fun loadAndInsertLocationData(location: String) =
-        viewModelScope.launch {
+        applicationScope.launch {
             locationEventChannel.send(LocationEvent.ShowCurrentLoadingStatus(Status.LOADING))
             try {
                 val locationData = apiHelper.currentLocation(location)
@@ -106,14 +122,21 @@ class LocationViewModel @Inject constructor(
                 ) {
                     showLocationMessage(SnackBarType.RED, "City Already Exists")
                 } else {
-                    showLocationMessage(SnackBarType.WHITE, "${locationData.name} Added")
+                    sendType.type = SendType.ADD
+                    preferenceManager.updateCurrentLocation(locationData.name)
+                    locationEventChannel.send(
+                        LocationEvent.ShowCurrentWeatherScreen(
+                            SendType.ADD,
+                            locationData.name
+                        )
+                    )
                 }
             } catch (exception: Exception) {
                 locationEventChannel.send(LocationEvent.ShowCurrentLoadingStatus(Status.ERROR))
-                if (exception.message == "HTTP 404 Not Found") {
-                    showLocationMessage(SnackBarType.RED, "City Not Found")
-                } else {
-                    showLocationMessage(SnackBarType.RED, "Something Went Wrong")
+                when (exception.message) {
+                    "HTTP 404 Not Found" -> showLocationMessage(SnackBarType.RED, "City Not Found")
+                    "timeout" -> showLocationMessage(SnackBarType.RED, "Took Too Long To Respond")
+                    else -> showLocationMessage(SnackBarType.RED, "Something Went Wrong")
                 }
             }
         }
@@ -125,7 +148,12 @@ class LocationViewModel @Inject constructor(
     private fun updateCurrentLocation(location: String) =
         applicationScope.launch {
             preferenceManager.updateCurrentLocation(location)
-            locationEventChannel.send(LocationEvent.ShowCurrentWeatherScreen(location))
+            locationEventChannel.send(
+                LocationEvent.ShowCurrentWeatherScreen(
+                    SendType.UPDATE,
+                    location
+                )
+            )
         }
 
     fun onLocationLongClicked(location: Location) {
@@ -157,22 +185,15 @@ class LocationViewModel @Inject constructor(
                     preferenceManager.updateCurrentLocation("")
                 } else {
 //                    Log.d(TAG, "deleteLocation: 2")
-                    preferenceManager.updateCurrentLocation(locationList[0].cityName)
+                    val alternateLocation = locationList[0].cityName
+                    preferenceManager.updateCurrentLocation(alternateLocation)
+                    sendType.location = alternateLocation
 //                    Log.d(TAG, "deleteLocation: ${locationList[0].cityName}")
                 }
             } else {
 //                Log.d(TAG, "deleteLocation: Not Same")
             }
             showLocationMessage(SnackBarType.WHITE, "${location.cityName} Deleted")
-        }
-
-    fun onNetworkChanged(status: Boolean) {
-        performOnNetworkChangeModification(status)
-    }
-
-    private fun performOnNetworkChangeModification(status: Boolean) =
-        viewModelScope.launch {
-            locationEventChannel.send(LocationEvent.PerformOnNetworkChangeModification(status))
         }
 
     sealed class LocationEvent {
@@ -182,10 +203,19 @@ class LocationViewModel @Inject constructor(
             LocationEvent()
 
         data class ShowCurrentLoadingStatus(val status: Status) : LocationEvent()
-        data class ShowCurrentWeatherScreen(val location: String) : LocationEvent()
-        data class ShowDeleteConfirmationScreen(val title: String, val location: Location) :
+        data class ShowCurrentWeatherScreen(val sendType: SendType, val location: String) :
             LocationEvent()
 
-        data class PerformOnNetworkChangeModification(val noNetwork: Boolean) : LocationEvent()
+        data class ShowDeleteConfirmationScreen(val title: String, val location: Location) :
+            LocationEvent()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        applicationScope.launch {
+            if (sendType.type == SendType.UPDATE && sendType.location.isNotBlank()) {
+                coreActivityChannel.send(CoreActivityEvent.RequestWeatherData(sendType.location))
+            }
+        }
     }
 }

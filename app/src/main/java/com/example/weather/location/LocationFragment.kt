@@ -20,18 +20,14 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.weather.R
-import com.example.weather.WeatherReceiver
+import com.example.weather.SnackBarType
 import com.example.weather.api.Status
 import com.example.weather.database.Location
 import com.example.weather.databinding.FragmentLocationBinding
+import com.example.weather.exhaustive
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
-import javax.inject.Inject
-
-enum class SnackBarType {
-    RED, WHITE
-}
 
 @AndroidEntryPoint
 class LocationFragment : Fragment(), LocationAdapter.ItemListener {
@@ -39,11 +35,9 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
     private var _binding: FragmentLocationBinding? = null
     private val binding get() = _binding!!
 
-    @Inject
-    lateinit var weatherReceiver: WeatherReceiver
     private val viewModel by viewModels<LocationViewModel>()
 
-    private var network: Boolean = false
+    private var connectivity: Boolean = false
     private lateinit var locationAdapter: LocationAdapter
 
     override fun onCreateView(
@@ -53,6 +47,11 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
         _binding = FragmentLocationBinding.inflate(inflater, container, false)
 
         binding.apply {
+            viewModel.connection.observe(viewLifecycleOwner) {
+                connectivity = it
+                addLocationButton.isVisible = it
+            }
+
             locationToolbar.apply {
                 setupWithNavController(findNavController())
                 setOnMenuItemClickListener {
@@ -61,10 +60,8 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
                             viewModel.onDeleteAllActionClicked()
                             true
                         }
-                        else -> {
-                            false
-                        }
-                    }
+                        else -> false
+                    }.exhaustive
                 }
             }
 
@@ -72,7 +69,6 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
             locationsRecyclerView.apply {
                 layoutManager = LinearLayoutManager(requireContext())
                 adapter = locationAdapter
-
                 val itemDecoration = DividerItemDecoration(requireContext(), LinearLayout.VERTICAL)
                 itemDecoration.setDrawable(ColorDrawable(requireContext().resources.getColor(R.color.white)))
                 addItemDecoration(itemDecoration)
@@ -81,15 +77,8 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
             addLocationButton.setOnClickListener {
                 viewModel.onAddLocationClicked()
             }
-        }
 
-        setFragmentResultListener("locationEntry") { _, bundle ->
-            val location = bundle.get("addedLocation") as String
-            viewModel.onLocationEntered(location)
-        }
-
-        viewModel.allLocation.observe(viewLifecycleOwner) {
-            binding.apply {
+            viewModel.allLocation.observe(viewLifecycleOwner) {
                 if (it.isNullOrEmpty()) {
                     noCityDataLayout.isVisible = true
                     locationsRecyclerView.isVisible = false
@@ -99,6 +88,11 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
                     binding.locationsRecyclerView.isVisible = true
                 }
             }
+        }
+
+        setFragmentResultListener("locationEntry") { _, bundle ->
+            val location = bundle.get("addedLocation") as String
+            viewModel.onLocationEntered(location)
         }
 
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
@@ -119,28 +113,26 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
                         findNavController().navigate(action)
                     }
                     is LocationViewModel.LocationEvent.ShowLocationMessage -> {
-                        binding.apply {
-                            when (event.type) {
-                                SnackBarType.RED -> {
-                                    Snackbar.make(
-                                        requireView(),
-                                        event.message,
-                                        Snackbar.LENGTH_SHORT
-                                    )
-                                        .setBackgroundTint(resources.getColor(R.color.red))
-                                        .setTextColor(Color.WHITE)
-                                        .show()
-                                }
-                                SnackBarType.WHITE -> {
-                                    Snackbar.make(
-                                        requireView(),
-                                        event.message,
-                                        Snackbar.LENGTH_SHORT
-                                    )
-                                        .setBackgroundTint(Color.WHITE)
-                                        .setTextColor(resources.getColor(R.color.red))
-                                        .show()
-                                }
+                        when (event.type) {
+                            SnackBarType.RED -> {
+                                Snackbar.make(
+                                    requireView(),
+                                    event.message,
+                                    Snackbar.LENGTH_SHORT
+                                )
+                                    .setBackgroundTint(resources.getColor(R.color.red))
+                                    .setTextColor(Color.WHITE)
+                                    .show()
+                            }
+                            SnackBarType.WHITE -> {
+                                Snackbar.make(
+                                    requireView(),
+                                    event.message,
+                                    Snackbar.LENGTH_SHORT
+                                )
+                                    .setBackgroundTint(Color.WHITE)
+                                    .setTextColor(resources.getColor(R.color.red))
+                                    .show()
                             }
                         }
                     }
@@ -156,7 +148,7 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
                     is LocationViewModel.LocationEvent.ShowCurrentWeatherScreen -> {
                         setFragmentResult(
                             "currentLocation",
-                            bundleOf("location" to event.location)
+                            bundleOf("location" to event.location, "sendType" to event.sendType)
                         )
                         findNavController().popBackStack()
                     }
@@ -169,23 +161,15 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
                             .setNeutralButton("Cancel", null)
                             .show()
                     }
-                    is LocationViewModel.LocationEvent.PerformOnNetworkChangeModification -> {
-                        network = !event.noNetwork
-                        binding.addLocationButton.isVisible = !event.noNetwork
-                    }
                 }
             }
-        }
-
-        weatherReceiver.noConnectivity.observe(viewLifecycleOwner) {
-            viewModel.onNetworkChanged(it)
         }
 
         return binding.root
     }
 
     override fun onItemClick(location: Location) {
-        if (network) {
+        if (connectivity) {
             viewModel.onLocationClicked(location.cityName)
         }
     }

@@ -10,8 +10,8 @@ import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.example.weather.datarequest.WeatherForecastServiceOne
-import com.example.weather.datarequest.WeatherForecastServiceTwo
+import com.example.weather.initialrequest.WeatherForecastServiceOne
+import com.example.weather.initialrequest.WeatherForecastServiceTwo
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.channels.Channel

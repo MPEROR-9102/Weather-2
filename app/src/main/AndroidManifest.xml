@@ -25,10 +25,10 @@
         </activity>
 
         <service
-            android:name=".datarequest.WeatherForecastServiceOne"
+            android:name=".initialrequest.WeatherForecastServiceOne"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
-            android:name=".datarequest.WeatherForecastServiceTwo"
+            android:name=".initialrequest.WeatherForecastServiceTwo"
             android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 

@@ -1,54 +1,56 @@
 package com.example.weather.currentweather
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.weather.PreferenceManager
+import com.example.weather.SnackBarType
+import com.example.weather.WeatherReceiver
 import com.example.weather.api.ApiHelper
-import com.example.weather.api.LocationResponse
 import com.example.weather.api.Status
-import com.example.weather.database.Location
-import com.example.weather.database.LocationDao
-import com.example.weather.di.ApplicationScope
+import com.example.weather.api.WeatherResponse
+import com.example.weather.location.SendType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TAG = "WeatherViewModel"
 
+data class ConnectivityNLocation(
+    val network: Boolean,
+    val location: String
+)
+
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    @ApplicationScope applicationScope: CoroutineScope,
     preferenceManager: PreferenceManager,
-    private val apiHelper: ApiHelper,
-    private val locationDao: LocationDao,
+    weatherReceiver: WeatherReceiver,
+    private val apiHelper: ApiHelper
 ) : ViewModel() {
 
     private val weatherEventsChannel = Channel<WeatherForecastEvents>()
     val weatherEvents = weatherEventsChannel.receiveAsFlow()
 
-    private val allLocationFlow = locationDao.getAll()
-    val allLocation = allLocationFlow.asLiveData()
-    val preferencesFlow = preferenceManager.preferencesFlow
+    private val preferencesFlow = preferenceManager.preferencesFlow
     val preferences = preferencesFlow.asLiveData()
 
-    init {
-//        Log.d(TAG, "Init: WeatherViewModel")
+    private val connectivityNLocationFlow = combine(
+        weatherReceiver.noConnectivity.asFlow(),
+        preferencesFlow
+    ) { noConnectivity, preferenceFlow ->
+        Pair(noConnectivity, preferenceFlow.currentLocation)
+    }.flatMapLatest { (noConnectivity, location) ->
+        flow { emit(ConnectivityNLocation(!noConnectivity, location)) }
+    }
+    val connectivityNLocation = connectivityNLocationFlow.asLiveData()
 
-        applicationScope.launch {
-            val allLocationData = allLocationFlow.first()
-            if (!allLocationData.isNullOrEmpty()) {
-                loadCityListWeatherData(allLocationData)
-            }
-            val currentLocation = preferencesFlow.first().currentLocation
-            if (currentLocation.isNotBlank()) {
-//                Log.e(TAG, ": ")
-                loadAndDisplayWeatherData(currentLocation)
-            }
+    fun onInitialLoadRequestReceived(location: String) {
+        viewModelScope.launch {
+            loadAndDisplayWeatherData(location)
         }
     }
 
@@ -67,53 +69,65 @@ class WeatherViewModel @Inject constructor(
         }
     }
 
-    fun onCurrentLocationReceived(location: String) {
+    fun onCurrentLocationReceived(sendType: SendType, location: String) {
+        when (sendType) {
+            SendType.ADD -> {
+                setCurrentLocation(location)
+            }
+            SendType.UPDATE -> {
+                updateCurrentWeather(location)
+            }
+        }
+    }
+
+    private fun updateCurrentWeather(location: String) =
         viewModelScope.launch {
             loadAndDisplayWeatherData(location)
         }
-    }
+
+    private fun setCurrentLocation(location: String) =
+        viewModelScope.launch {
+            loadAndDisplayWeatherData(location)
+            weatherEventsChannel.send(
+                WeatherForecastEvents.ShowWeatherMessage(
+                    SnackBarType.WHITE,
+                    "$location Added"
+                )
+            )
+        }
 
     private suspend fun loadAndDisplayWeatherData(location: String) {
         weatherEventsChannel.send(WeatherForecastEvents.ShowCurrentLoadingStatus(Status.LOADING))
         try {
-            val weatherData = apiHelper.currentLocation(location)
+            val locationData = apiHelper.currentWeather(location)
             weatherEventsChannel.send(WeatherForecastEvents.ShowCurrentLoadingStatus(Status.SUCCESS))
-            weatherEventsChannel.send(WeatherForecastEvents.DisplayWeatherData(weatherData))
+            weatherEventsChannel.send(WeatherForecastEvents.DisplayWeatherData(locationData))
+            Log.d(TAG, "loadAndDisplayWeatherData: Loaded Successfully")
         } catch (exception: Exception) {
             weatherEventsChannel.send(WeatherForecastEvents.ShowCurrentLoadingStatus(Status.ERROR))
-        }
-    }
-
-    private suspend fun loadCityListWeatherData(locationList: List<Location>) {
-        try {
-//            Log.d(TAG, "loadCityListWeatherData: Loading...")
-//            Log.d(TAG, "loadCityListWeatherData: $locationList")
-            for (location in locationList) {
-                val locationData = apiHelper.currentLocation(location.cityName)
-                locationDao.update(
-                    locationData.name,
-                    locationData.main.temp,
-                    locationData.weather[0].main,
-                    locationData.weather[0].icon
-                )
-//                Log.d(TAG, "loadCityListWeatherData: ${locationData.name} Updated")
+            Log.d(TAG, "loadAndDisplayWeatherData: ${exception.message}")
+            when (exception.message) {
+                "timeout" ->
+                    WeatherForecastEvents.ShowWeatherMessage(
+                        SnackBarType.RED,
+                        "Took Too Long To Respond"
+                    )
+                else ->
+                    WeatherForecastEvents.ShowWeatherMessage(
+                        SnackBarType.RED,
+                        "Something Went Wrong"
+                    )
             }
-//            Log.d(TAG, "loadCityListWeatherData: Completed")
-        } catch (exception: Exception) {
-            weatherEventsChannel.send(
-                WeatherForecastEvents.ShowUnableToLoadMessage(
-                    "Error Loading Data"
-                )
-            )
         }
     }
 
     sealed class WeatherForecastEvents {
         object ShowCitiesScreen : WeatherForecastEvents()
         data class ShowCurrentLoadingStatus(val status: Status) : WeatherForecastEvents()
-        data class DisplayWeatherData(val locationData: LocationResponse) :
+        data class DisplayWeatherData(val weatherData: WeatherResponse) :
             WeatherForecastEvents()
 
-        data class ShowUnableToLoadMessage(val message: String) : WeatherForecastEvents()
+        data class ShowWeatherMessage(val type: SnackBarType, val message: String) :
+            WeatherForecastEvents()
     }
 }

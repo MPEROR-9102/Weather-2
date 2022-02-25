@@ -49,10 +49,11 @@ class WeatherForecastServiceOne : JobService() {
                             return@launch
                         val locationData = apiHelper.currentLocation(location.cityName)
                         locationDao.update(
-                            locationData.name,
-                            locationData.main.temp,
-                            locationData.weather[0].main,
-                            locationData.weather[0].icon
+                            location.copy(
+                                temp = locationData.main.temp,
+                                main = locationData.weather[0].main,
+                                iconId = locationData.weather[0].icon
+                            )
                         )
                     }
                 } catch (exception: Exception) {

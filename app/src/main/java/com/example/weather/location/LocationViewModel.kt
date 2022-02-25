@@ -182,6 +182,7 @@ class LocationViewModel @Inject constructor(
                 val locationList = allLocationFlow.first()
                 if (locationList.isNullOrEmpty()) {
 //                    Log.d(TAG, "deleteLocation: 1")
+                    sendType.location = ""
                     preferenceManager.updateCurrentLocation("")
                 } else {
 //                    Log.d(TAG, "deleteLocation: 2")

@@ -8,14 +8,8 @@ interface LocationDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(location: Location): Long
 
-    @Query(
-        "UPDATE location_table SET " +
-                "temperature = :temp, " +
-                "description = :main, " +
-                "icon_id = :iconId " +
-                "WHERE city_name = :cityName"
-    )
-    suspend fun update(cityName: String, temp: Float, main: String, iconId: String)
+    @Update
+    suspend fun update(location: Location)
 
     @Delete
     suspend fun delete(location: Location)

@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/citiesAction"
-        android:icon="@drawable/ic_baseline_location_city_24"
+        android:icon="@drawable/ic_baseline_domain_24"
         android:title="@string/cities_action_title"
         app:showAsAction="ifRoom" />
 

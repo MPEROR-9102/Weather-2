@@ -58,15 +58,18 @@ class SettingsViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         applicationScope.launch {
-            if (changedTemperatureUnit != null && changedTemperatureUnit != currentTemperatureUnit) {
+            val temperatureChange =
+                changedTemperatureUnit != null && changedTemperatureUnit != currentTemperatureUnit
+            if (temperatureChange) {
                 Log.d(TAG, "onCleared: Temperature Changed")
                 preferenceManager.updateTemperatureUnit(changedTemperatureUnit as TemperatureUnit)
             }
-            if (changedSpeedUnit != null && changedSpeedUnit != currentSpeedUnit) {
+            val speedChange = changedSpeedUnit != null && changedSpeedUnit != currentSpeedUnit
+            if (speedChange) {
                 Log.d(TAG, "onCleared: Speed Changed")
                 preferenceManager.updateSpeedUnit(changedSpeedUnit as SpeedUnit)
             }
-            if (changedSpeedUnit != null || changedTemperatureUnit != null) {
+            if (temperatureChange || speedChange) {
                 coreActivityChannel.send(CoreActivityEvent.UndergoUnitChange)
             }
         }

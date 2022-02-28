@@ -17,8 +17,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Singleton
 
 @RequiresApi(Build.VERSION_CODES.O)
+@Singleton
 class HourlyForecastAdapter @Inject constructor(
     @ApplicationScope applicationScope: CoroutineScope,
     preferenceManager: PreferenceManager

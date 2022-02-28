@@ -49,7 +49,11 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                 noCityDataLayout.isVisible = location.isBlank()
                 scrollLayout.isNestedScrollingEnabled = location.isNotBlank()
                 swipeToRefresh.isEnabled = connectivity && location.isNotBlank()
-                mainLayout.isVisible = connectivity && location.isNotBlank()
+                mainLayout.isVisible = location.isNotBlank()
+
+                hourlyForecastCardView.isVisible = connectivity
+                sunProgressCardView.isVisible = connectivity
+                detailsCardView.isVisible = connectivity
             }
 
             currentWeatherToolbar.setOnMenuItemClickListener { item ->

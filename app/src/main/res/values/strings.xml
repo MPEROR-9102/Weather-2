@@ -7,4 +7,6 @@
     <string name="center_full_stop">.</string>
     <string name="settings_action_title">Settings</string>
     <string name="cities_action_title">Cities</string>
+    <string name="icon_cont_desc">Weather Icon</string>
+    <string name="hourly_text_view">HOURLY FORECAST</string>
 </resources>

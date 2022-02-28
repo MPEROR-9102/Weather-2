@@ -1,10 +1,7 @@
 package com.example.weather.currentweather
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.weather.PreferenceManager
 import com.example.weather.SnackBarType
 import com.example.weather.WeatherReceiver
@@ -35,8 +32,7 @@ class WeatherViewModel @Inject constructor(
     private val weatherEventsChannel = Channel<WeatherForecastEvents>()
     val weatherEvents = weatherEventsChannel.receiveAsFlow()
 
-    private val preferencesFlow = preferenceManager.preferencesFlow
-    val preferences = preferencesFlow.asLiveData()
+    val preferencesFlow = preferenceManager.preferencesFlow
 
     private val connectivityNLocationFlow = combine(
         weatherReceiver.noConnectivity.asFlow(),
@@ -47,6 +43,9 @@ class WeatherViewModel @Inject constructor(
         flow { emit(ConnectivityNLocation(!noConnectivity, location)) }
     }
     val connectivityNLocation = connectivityNLocationFlow.asLiveData()
+
+    private val _currentWeatherData: MutableLiveData<WeatherResponse> = MutableLiveData()
+    val currentWeatherData: LiveData<WeatherResponse> = _currentWeatherData
 
     fun onInitialLoadRequestReceived(location: String) {
         viewModelScope.launch {
@@ -101,7 +100,7 @@ class WeatherViewModel @Inject constructor(
         try {
             val locationData = apiHelper.currentWeather(location)
             weatherEventsChannel.send(WeatherForecastEvents.ShowCurrentLoadingStatus(Status.SUCCESS))
-            weatherEventsChannel.send(WeatherForecastEvents.DisplayWeatherData(locationData))
+            _currentWeatherData.postValue(locationData)
             Log.d(TAG, "loadAndDisplayWeatherData: Loaded Successfully")
         } catch (exception: Exception) {
             weatherEventsChannel.send(WeatherForecastEvents.ShowCurrentLoadingStatus(Status.ERROR))
@@ -124,9 +123,6 @@ class WeatherViewModel @Inject constructor(
     sealed class WeatherForecastEvents {
         object ShowCitiesScreen : WeatherForecastEvents()
         data class ShowCurrentLoadingStatus(val status: Status) : WeatherForecastEvents()
-        data class DisplayWeatherData(val weatherData: WeatherResponse) :
-            WeatherForecastEvents()
-
         data class ShowWeatherMessage(val type: SnackBarType, val message: String) :
             WeatherForecastEvents()
     }

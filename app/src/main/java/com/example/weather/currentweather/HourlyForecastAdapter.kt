@@ -9,18 +9,33 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.example.weather.TemperatureUnit
+import com.example.weather.*
+import com.example.weather.currentweatherdata.HourlyData
 import com.example.weather.databinding.HourlyViewLayoutBinding
-import com.example.weather.formatHourlyTime
-import com.example.weather.formatTempDisplay
-import com.example.weather.iconUrl
-import com.example.weather.weatherdata.HourlyData
+import com.example.weather.di.ApplicationScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @RequiresApi(Build.VERSION_CODES.O)
-class HourlyForecastAdapter(private val temperatureUnit: TemperatureUnit) :
+@Singleton
+class HourlyForecastAdapter @Inject constructor(
+    @ApplicationScope applicationScope: CoroutineScope,
+    preferenceManager: PreferenceManager
+) :
     ListAdapter<HourlyData, HourlyForecastAdapter.HourlyForecastViewHolder>(
         DIFF_CONFIG
     ) {
+
+    lateinit var temperatureUnit: TemperatureUnit
+
+    init {
+        applicationScope.launch {
+            temperatureUnit = preferenceManager.preferencesFlow.first().temperatureUnit
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HourlyForecastViewHolder {
         val binding = HourlyViewLayoutBinding.inflate(LayoutInflater.from(parent.context))

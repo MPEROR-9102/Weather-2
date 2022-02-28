@@ -11,7 +11,9 @@ import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.weather.*
 import com.example.weather.api.Status
 import com.example.weather.databinding.FragmentWeatherBinding
@@ -31,6 +33,9 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
     @Inject
     lateinit var weatherReceiver: WeatherReceiver
 
+    @Inject
+    lateinit var hourlyForecastAdapter: HourlyForecastAdapter
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,7 +49,7 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                 noCityDataLayout.isVisible = location.isBlank()
                 scrollLayout.isNestedScrollingEnabled = location.isNotBlank()
                 swipeToRefresh.isEnabled = connectivity && location.isNotBlank()
-                mainLayout.isVisible = location.isNotBlank()
+                mainLayout.isVisible = connectivity && location.isNotBlank()
             }
 
             currentWeatherToolbar.setOnMenuItemClickListener { item ->
@@ -61,30 +66,54 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                 }
             }
 
-            swipeToRefresh.apply {
-                setDistanceToTriggerSync(750)
-                setOnRefreshListener {
-                    viewModel.onRefreshed()
-                }
+            swipeToRefresh.setOnRefreshListener {
+                viewModel.onRefreshed()
+            }
+
+            hourlyForecastRecyclerView.apply {
+                layoutManager =
+                    LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+                adapter = hourlyForecastAdapter
             }
 
             viewModel.currentWeatherData.observe(viewLifecycleOwner) { weatherData ->
                 val timeZone = weatherData.timezone
+                val currentDate = weatherData.current.date
+
                 weatherData.current.apply {
                     dateTextView.text = formatDate(date, timeZone)
                     timeTextView.text = formatTime(date, timeZone)
 
                     viewLifecycleOwner.lifecycleScope.launch {
-                        tempTextView.text = formatTempDisplay(
-                            temp,
-                            viewModel.preferencesFlow.first().temperatureUnit
-                        )
+                        viewModel.preferencesFlow.first().apply {
+                            tempTextView.text = formatTempDisplay(
+                                temp,
+                                this.temperatureUnit
+                            )
+                            windTextView.text = formatWindSpeedDisplay(
+                                wind_speed,
+                                this.speedUnit
+                            )
+                            visibilityTextView.text = formatVisibilityDisplay(
+                                visibility.toFloat(),
+                                this.speedUnit
+                            )
+                        }
                     }
 
                     mainTextView.text = weather[0].main
                     Glide.with(requireView())
                         .load(iconUrl(weather[0].icon))
+                        .transition(DrawableTransitionOptions.withCrossFade())
                         .into(iconImageView)
+
+                    sunProgressBar.progress = getSunProgress(date, sunrise, sunset, timeZone)
+                    sunriseTextView.text = formatTime(sunrise, timeZone)
+                    sunsetTextView.text = formatTime(sunset, timeZone)
+
+                    humidityTextView.text = String.format("%1$1d%2$%", humidity)
+                    windText.text = String.format("%1$1s Wind", getDirection(wind_deg))
+                    pressureTextView.text = String.format("%1$1d hPa", pressure)
                 }
             }
         }
@@ -98,6 +127,9 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.weatherEvents.collect { event ->
                 when (event) {
+                    is WeatherViewModel.WeatherForecastEvents.LoadHourlyForecastData -> {
+                        hourlyForecastAdapter.submitList(event.hourlyDataList)
+                    }
                     WeatherViewModel.WeatherForecastEvents.ShowCitiesScreen -> {
                         val action =
                             WeatherFragmentDirections.actionWeatherFragment2ToLocationFragment()

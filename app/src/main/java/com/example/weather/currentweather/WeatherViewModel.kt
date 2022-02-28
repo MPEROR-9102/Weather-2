@@ -8,6 +8,7 @@ import com.example.weather.WeatherReceiver
 import com.example.weather.api.ApiHelper
 import com.example.weather.api.Status
 import com.example.weather.api.WeatherResponse
+import com.example.weather.currentweatherdata.HourlyData
 import com.example.weather.location.SendType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -101,6 +102,19 @@ class WeatherViewModel @Inject constructor(
             val locationData = apiHelper.currentWeather(location)
             weatherEventsChannel.send(WeatherForecastEvents.ShowCurrentLoadingStatus(Status.SUCCESS))
             _currentWeatherData.postValue(locationData)
+            locationData.apply {
+                weatherEventsChannel.send(WeatherForecastEvents.LoadHourlyForecastData(
+                    hourly.map {
+                        HourlyData(
+                            timezone,
+                            current.date,
+                            it.date,
+                            it.weather[0].icon,
+                            it.temp
+                        )
+                    }
+                ))
+            }
             Log.d(TAG, "loadAndDisplayWeatherData: Loaded Successfully")
         } catch (exception: Exception) {
             weatherEventsChannel.send(WeatherForecastEvents.ShowCurrentLoadingStatus(Status.ERROR))
@@ -121,6 +135,9 @@ class WeatherViewModel @Inject constructor(
     }
 
     sealed class WeatherForecastEvents {
+        data class LoadHourlyForecastData(val hourlyDataList: List<HourlyData>) :
+            WeatherForecastEvents()
+
         object ShowCitiesScreen : WeatherForecastEvents()
         data class ShowCurrentLoadingStatus(val status: Status) : WeatherForecastEvents()
         data class ShowWeatherMessage(val type: SnackBarType, val message: String) :

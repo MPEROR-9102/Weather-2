@@ -1,4 +1,4 @@
-package com.example.weather.weatherdata
+package com.example.weather.currentweatherdata
 
 data class HourlyData(
     val timeZone: String,

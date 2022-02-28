@@ -34,6 +34,28 @@ fun formatTempDisplay(temp: Float, tempDisplayUnit: TemperatureUnit): String {
     }
 }
 
+fun formatWindSpeedDisplay(windSpeed: Float, speedUnit: SpeedUnit): String {
+    return when (speedUnit) {
+        SpeedUnit.MILES -> {
+            String.format("%1$.1f mi/h", windSpeed / 1.609)
+        }
+        SpeedUnit.KILOMETERS -> {
+            String.format("%1$1.1f km", windSpeed)
+        }
+    }
+}
+
+fun formatVisibilityDisplay(visibility: Float, speedUnit: SpeedUnit): String {
+    return when (speedUnit) {
+        SpeedUnit.MILES -> {
+            String.format("%1$1.1f mi", visibility / 1609)
+        }
+        SpeedUnit.KILOMETERS -> {
+            String.format("%1$1.1f km", visibility / 10000)
+        }
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 fun formatTime(dt: Long, timeZone: String): String {
     var hour = getClock(dt, timeZone).hour
@@ -69,3 +91,28 @@ fun formatHourlyTime(currentTime: Long, hourlyTime: Long, timeZone: String): Str
     val hourly = getHour(hourlyTime, timeZone)
     return if (current == hourly) "Now" else hourly
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun hourInMin(dt: Long, timeZone: String) =
+    getClock(dt, timeZone).hour * 60 + getClock(dt, timeZone).minute
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun getSunProgress(dt: Long, rise: Long, set: Long, timeZone: String): Int {
+    val riseMin = hourInMin(rise, timeZone)
+    val setMin = hourInMin(set, timeZone)
+    val currentMin = getClock(dt, timeZone).hour * 60 + getClock(dt, timeZone).minute
+
+    val estimatedInterval = setMin - riseMin
+    val liveStat = currentMin - riseMin
+
+    return when {
+        currentMin <= riseMin -> 0
+        (currentMin in (riseMin + 1)..setMin) -> (liveStat * 100) / estimatedInterval
+        else -> 100
+    }
+}
+
+private val DIRECTIONS = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+fun getDirection(degrees: Int) = DIRECTIONS[degrees / 45]
+

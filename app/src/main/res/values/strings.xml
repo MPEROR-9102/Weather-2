@@ -9,4 +9,11 @@
     <string name="cities_action_title">Cities</string>
     <string name="icon_cont_desc">Weather Icon</string>
     <string name="hourly_text_view">HOURLY FORECAST</string>
+    <string name="sun_progress_text_view"><![CDATA[SUNRISE & SUNSET]]></string>
+    <string name="daily_forecast_text_view">DAILY FORECAST</string>
+    <string name="details_text_view">DETAILS</string>
+    <string name="humidity_text_view">HUMIDITY</string>
+    <string name="wind_text_view">WIND</string>
+    <string name="pressure_text_view">PRESSURE</string>
+    <string name="visibility_text_view">VISIBILITY</string>
 </resources>

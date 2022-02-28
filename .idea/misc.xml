@@ -8,10 +8,12 @@
         <entry key="app/src/main/res/drawable/ic_baseline_add_24.xml" value="0.164" />
         <entry key="app/src/main/res/drawable/ic_baseline_location_city_24.xml" value="0.164" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.2641025641025641" />
+        <entry key="app/src/main/res/layout/daily_view_layout.xml" value="0.24074074074074073" />
         <entry key="app/src/main/res/layout/edittext_layout.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/layout/fragment_current_weather.xml" value="0.26296296296296295" />
         <entry key="app/src/main/res/layout/fragment_location.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/layout/fragment_weather.xml" value="0.28229166666666666" />
+        <entry key="app/src/main/res/layout/hourly_view_layout.xml" value="0.24074074074074073" />
         <entry key="app/src/main/res/layout/location_view_layout.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/menu/current_weather_menu.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/menu/location_menu.xml" value="0.28229166666666666" />

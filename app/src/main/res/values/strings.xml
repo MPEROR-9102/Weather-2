@@ -16,4 +16,11 @@
     <string name="wind_text_view">WIND</string>
     <string name="pressure_text_view">PRESSURE</string>
     <string name="visibility_text_view">VISIBILITY</string>
+    <string name="fahrenheit_toggle_text">°F</string>
+    <string name="celsius_toggle_text">°C</string>
+    <string name="temp_unit_text_view">Temperature Unit</string>
+    <string name="speed_unit_text_view">Speed Unit</string>
+    <string name="miles_toggle_text">mi/h</string>
+    <string name="kilometer_toggle_text">km/h</string>
+    <string name="app_tag">Weather By MPEROR</string>
 </resources>

@@ -12,6 +12,7 @@
         <entry key="app/src/main/res/layout/edittext_layout.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/layout/fragment_current_weather.xml" value="0.26296296296296295" />
         <entry key="app/src/main/res/layout/fragment_location.xml" value="0.28229166666666666" />
+        <entry key="app/src/main/res/layout/fragment_settings.xml" value="0.24537037037037038" />
         <entry key="app/src/main/res/layout/fragment_weather.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/layout/hourly_view_layout.xml" value="0.24074074074074073" />
         <entry key="app/src/main/res/layout/location_view_layout.xml" value="0.28229166666666666" />

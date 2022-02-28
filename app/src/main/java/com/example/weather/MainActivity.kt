@@ -25,6 +25,7 @@ val coreActivity = coreActivityChannel.receiveAsFlow()
 
 sealed class CoreActivityEvent {
     data class RequestWeatherData(val location: String) : CoreActivityEvent()
+    object UndergoUnitChange : CoreActivityEvent()
 }
 
 enum class SnackBarType {

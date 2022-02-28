@@ -59,7 +59,7 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                         true
                     }
                     R.id.settingsAction -> {
-                        // Yet to add
+                        viewModel.onSettingsActionClicked()
                         true
                     }
                     else -> false
@@ -78,8 +78,6 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
 
             viewModel.currentWeatherData.observe(viewLifecycleOwner) { weatherData ->
                 val timeZone = weatherData.timezone
-                val currentDate = weatherData.current.date
-
                 weatherData.current.apply {
                     dateTextView.text = formatDate(date, timeZone)
                     timeTextView.text = formatTime(date, timeZone)
@@ -135,6 +133,11 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                             WeatherFragmentDirections.actionWeatherFragment2ToLocationFragment()
                         findNavController().navigate(action)
                     }
+                    WeatherViewModel.WeatherForecastEvents.ShowSettingsScreen -> {
+                        val action =
+                            WeatherFragmentDirections.actionWeatherFragment2ToSettingsFragment()
+                        findNavController().navigate(action)
+                    }
                     is WeatherViewModel.WeatherForecastEvents.ShowCurrentLoadingStatus -> {
                         binding.apply {
                             when (event.status) {
@@ -150,7 +153,7 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                                 Snackbar.make(
                                     requireView(),
                                     event.message,
-                                    Snackbar.LENGTH_SHORT
+                                    event.delay
                                 )
                                     .setBackgroundTint(resources.getColor(R.color.red))
                                     .setTextColor(Color.WHITE)
@@ -160,7 +163,7 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                                 Snackbar.make(
                                     requireView(),
                                     event.message,
-                                    Snackbar.LENGTH_SHORT
+                                    event.delay
                                 )
                                     .setBackgroundTint(Color.WHITE)
                                     .setTextColor(resources.getColor(R.color.red))
@@ -176,6 +179,9 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                 when (event) {
                     is CoreActivityEvent.RequestWeatherData -> {
                         viewModel.onInitialLoadRequestReceived(event.location)
+                    }
+                    CoreActivityEvent.UndergoUnitChange -> {
+                        viewModel.onUnitsChanged()
                     }
                 }
             }

@@ -17,6 +17,9 @@
         <action
             android:id="@+id/action_weatherFragment2_to_locationFragment"
             app:destination="@id/locationFragment" />
+        <action
+            android:id="@+id/action_weatherFragment2_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
     <dialog
         android:id="@+id/locationEntryDialogFragment"
@@ -25,4 +28,9 @@
     <action
         android:id="@+id/action_global_locationEntryDialogFragment"
         app:destination="@id/locationEntryDialogFragment" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.weather.settings.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
 </navigation>

@@ -40,7 +40,7 @@ fun formatWindSpeedDisplay(windSpeed: Float, speedUnit: SpeedUnit): String {
             String.format("%1$.1f mi/h", windSpeed / 1.609)
         }
         SpeedUnit.KILOMETERS -> {
-            String.format("%1$1.1f km", windSpeed)
+            String.format("%1$1.1f km/h", windSpeed)
         }
     }
 }
@@ -51,7 +51,7 @@ fun formatVisibilityDisplay(visibility: Float, speedUnit: SpeedUnit): String {
             String.format("%1$1.1f mi", visibility / 1609)
         }
         SpeedUnit.KILOMETERS -> {
-            String.format("%1$1.1f km", visibility / 10000)
+            String.format("%1$1.1f km", visibility / 1000)
         }
     }
 }

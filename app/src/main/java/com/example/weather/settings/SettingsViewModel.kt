@@ -1,9 +1,7 @@
 package com.example.weather.settings
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.weather.*
 import com.example.weather.di.ApplicationScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,59 +15,43 @@ private const val TAG = "SettingsViewModel"
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     @ApplicationScope private val applicationScope: CoroutineScope,
-    private val preferenceManager: PreferenceManager
+    private val preferenceManager: PreferenceManager,
+    weatherReceiver: WeatherReceiver
 ) : ViewModel() {
 
     private val preferenceFlow = preferenceManager.preferencesFlow
     val preferences = preferenceFlow.asLiveData()
 
-    private lateinit var currentTemperatureUnit: TemperatureUnit
-    private lateinit var currentSpeedUnit: SpeedUnit
-    private var changedTemperatureUnit: TemperatureUnit? = null
-    private var changedSpeedUnit: SpeedUnit? = null
+    private lateinit var currentUnitSystem: UnitSystem
+    private var changedUnitSystem: UnitSystem? = null
+
+    val connectivityLiveData = weatherReceiver.noConnectivity.switchMap {
+        liveData {
+            emit(!it)
+        }
+    }
 
     init {
         viewModelScope.launch {
             preferenceFlow.first().apply {
-                currentTemperatureUnit = this.temperatureUnit
-                currentSpeedUnit = this.speedUnit
+                currentUnitSystem = this.unitSystem
             }
         }
     }
 
-    fun onTemperatureToggleButtonClicked(temperatureUnit: TemperatureUnit) {
-        changedTemperatureUnit = when (temperatureUnit) {
-            TemperatureUnit.FAHRENHEIT -> {
-                TemperatureUnit.FAHRENHEIT
-            }
-            TemperatureUnit.CELSIUS -> {
-                TemperatureUnit.CELSIUS
-            }
-        }
-    }
-
-    fun onSpeedToggleButtonClicked(speedUnit: SpeedUnit) {
-        changedSpeedUnit = when (speedUnit) {
-            SpeedUnit.MILES -> SpeedUnit.MILES
-            SpeedUnit.KILOMETERS -> SpeedUnit.KILOMETERS
+    fun onUnitToggleButtonClicked(unitSystem: UnitSystem) {
+        changedUnitSystem = when (unitSystem) {
+            UnitSystem.IMPERIAL -> UnitSystem.IMPERIAL
+            UnitSystem.METRIC -> UnitSystem.METRIC
         }
     }
 
     override fun onCleared() {
         super.onCleared()
         applicationScope.launch {
-            val temperatureChange =
-                changedTemperatureUnit != null && changedTemperatureUnit != currentTemperatureUnit
-            if (temperatureChange) {
-                Log.d(TAG, "onCleared: Temperature Changed")
-                preferenceManager.updateTemperatureUnit(changedTemperatureUnit as TemperatureUnit)
-            }
-            val speedChange = changedSpeedUnit != null && changedSpeedUnit != currentSpeedUnit
-            if (speedChange) {
-                Log.d(TAG, "onCleared: Speed Changed")
-                preferenceManager.updateSpeedUnit(changedSpeedUnit as SpeedUnit)
-            }
-            if (temperatureChange || speedChange) {
+            if (changedUnitSystem != null && changedUnitSystem != currentUnitSystem) {
+                Log.d(TAG, "onCleared: Units Changed")
+                preferenceManager.updateUnitSystem(changedUnitSystem as UnitSystem)
                 coreActivityChannel.send(CoreActivityEvent.UndergoUnitChange)
             }
         }

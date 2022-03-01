@@ -27,80 +27,42 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <TextView
-        android:id="@+id/temperatureTextView"
+        android:id="@+id/unitTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:padding="16dp"
-        android:text="@string/temp_unit_text_view"
+        android:text="@string/unit_text_view"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@color/white"
+        android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout2" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/temperatureToggleButton"
+        android:id="@+id/unitToggleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toBottomOf="@+id/temperatureTextView"
+        app:layout_constraintBottom_toBottomOf="@+id/unitTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/temperatureTextView"
-        app:layout_constraintTop_toTopOf="@+id/temperatureTextView"
+        app:layout_constraintStart_toEndOf="@+id/unitTextView"
+        app:layout_constraintTop_toTopOf="@+id/unitTextView"
         app:singleSelection="true">
 
         <Button
-            android:id="@+id/fahrenheitButton"
+            android:id="@+id/imperialButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/fahrenheit_toggle_text"
+            android:text="@string/imperial_toggle_text"
             android:textColor="@color/white" />
 
         <Button
-            android:id="@+id/celsiusButton"
+            android:id="@+id/metricButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/celsius_toggle_text"
-            android:textColor="@color/white" />
-
-    </com.google.android.material.button.MaterialButtonToggleGroup>
-
-    <TextView
-        android:id="@+id/speedTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:text="@string/speed_unit_text_view"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:textColor="@color/white"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/temperatureTextView" />
-
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/speedToggleButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toBottomOf="@+id/speedTextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/speedTextView"
-        app:layout_constraintTop_toTopOf="@+id/speedTextView"
-        app:singleSelection="true">
-
-        <Button
-            android:id="@+id/milesButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/miles_toggle_text"
-            android:textColor="@color/white" />
-
-        <Button
-            android:id="@+id/kilometerButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/kilometer_toggle_text"
+            android:text="@string/metric_toggle_text"
             android:textColor="@color/white" />
 
     </com.google.android.material.button.MaterialButtonToggleGroup>

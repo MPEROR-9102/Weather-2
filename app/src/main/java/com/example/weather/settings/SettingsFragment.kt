@@ -10,8 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.weather.R
-import com.example.weather.SpeedUnit
-import com.example.weather.TemperatureUnit
+import com.example.weather.UnitSystem
 import com.example.weather.databinding.FragmentSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -23,6 +22,8 @@ class SettingsFragment : Fragment() {
 
     val viewModel by viewModels<SettingsViewModel>()
 
+    private var connectivity = false
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -30,55 +31,35 @@ class SettingsFragment : Fragment() {
 
         binding.apply {
             settingsToolbar.setupWithNavController(findNavController())
-            fahrenheitButton.setBackgroundColor(Color.BLACK)
-            celsiusButton.setBackgroundColor(Color.BLACK)
-            milesButton.setBackgroundColor(Color.BLACK)
-            kilometerButton.setBackgroundColor(Color.BLACK)
+            imperialButton.setBackgroundColor(Color.BLACK)
+            metricButton.setBackgroundColor(Color.BLACK)
 
             viewModel.preferences.observe(viewLifecycleOwner) {
-                when (it.temperatureUnit) {
-                    TemperatureUnit.FAHRENHEIT -> fahrenheitButton.setBackgroundColor(Color.RED)
-                    TemperatureUnit.CELSIUS -> celsiusButton.setBackgroundColor(Color.RED)
-                }
-                when (it.speedUnit) {
-                    SpeedUnit.MILES -> milesButton.setBackgroundColor(Color.RED)
-                    SpeedUnit.KILOMETERS -> kilometerButton.setBackgroundColor(Color.RED)
+                when (it.unitSystem) {
+                    UnitSystem.IMPERIAL -> imperialButton.setBackgroundColor(Color.RED)
+                    UnitSystem.METRIC -> metricButton.setBackgroundColor(Color.RED)
                 }
             }
 
-            temperatureToggleButton.addOnButtonCheckedListener { toggleButton, checkId, isChecked ->
-                if (isChecked) {
-                    var temperatureUnit = TemperatureUnit.FAHRENHEIT
-                    when (checkId) {
-                        R.id.fahrenheitButton -> {
-                            fahrenheitButton.setBackgroundColor(Color.RED)
-                            celsiusButton.setBackgroundColor(Color.BLACK)
-                        }
-                        R.id.celsiusButton -> {
-                            celsiusButton.setBackgroundColor(Color.RED)
-                            fahrenheitButton.setBackgroundColor(Color.BLACK)
-                            temperatureUnit = TemperatureUnit.CELSIUS
-                        }
-                    }
-                    viewModel.onTemperatureToggleButtonClicked(temperatureUnit)
-                }
+            viewModel.connectivityLiveData.observe(viewLifecycleOwner) {
+                connectivity = it
             }
 
-            speedToggleButton.addOnButtonCheckedListener { toggleButton, checkId, isChecked ->
-                if (isChecked) {
-                    var speedUnit = SpeedUnit.MILES
+            unitToggleButton.addOnButtonCheckedListener { toggleButton, checkId, isChecked ->
+                if (isChecked && connectivity) {
+                    var unitSystem = UnitSystem.IMPERIAL
                     when (checkId) {
-                        R.id.milesButton -> {
-                            milesButton.setBackgroundColor(Color.RED)
-                            kilometerButton.setBackgroundColor(Color.BLACK)
+                        R.id.imperialButton -> {
+                            imperialButton.setBackgroundColor(Color.RED)
+                            metricButton.setBackgroundColor(Color.BLACK)
                         }
-                        R.id.kilometerButton -> {
-                            kilometerButton.setBackgroundColor(Color.RED)
-                            milesButton.setBackgroundColor(Color.BLACK)
-                            speedUnit = SpeedUnit.KILOMETERS
+                        R.id.metricButton -> {
+                            metricButton.setBackgroundColor(Color.RED)
+                            imperialButton.setBackgroundColor(Color.BLACK)
+                            unitSystem = UnitSystem.METRIC
                         }
                     }
-                    viewModel.onSpeedToggleButtonClicked(speedUnit)
+                    viewModel.onUnitToggleButtonClicked(unitSystem)
                 }
             }
         }

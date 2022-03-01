@@ -50,7 +50,11 @@ class LocationViewModel @Inject constructor(
     }
 
     init {
-//        Log.e(TAG, "Init: LocationViewModel")
+        viewModelScope.launch {
+            if (allLocationFlow.first().isNullOrEmpty() && connection.value == true) {
+                showLocationEntryScreen()
+            }
+        }
     }
 
     private fun showLocationMessage(type: SnackBarType, message: String) =

@@ -24,37 +24,37 @@ fun formatDate(dt: Long, timeZone: String): String {
     }
 }
 
-fun formatTempDisplay(temp: Float, tempDisplayUnit: TemperatureUnit): String {
-    return when (tempDisplayUnit) {
-        TemperatureUnit.FAHRENHEIT -> String.format("%.0f°", temp)
-        TemperatureUnit.CELSIUS -> {
-            val celsiusTemp = (temp - 32f) * (5f / 9f)
-            String.format("%.0f°", celsiusTemp)
-        }
-    }
-}
-
-fun formatWindSpeedDisplay(windSpeed: Float, speedUnit: SpeedUnit): String {
-    return when (speedUnit) {
-        SpeedUnit.MILES -> {
-            String.format("%1$.1f mi/h", windSpeed / 1.609)
-        }
-        SpeedUnit.KILOMETERS -> {
-            String.format("%1$1.1f km/h", windSpeed)
-        }
-    }
-}
-
-fun formatVisibilityDisplay(visibility: Float, speedUnit: SpeedUnit): String {
-    return when (speedUnit) {
-        SpeedUnit.MILES -> {
-            String.format("%1$1.1f mi", visibility / 1609)
-        }
-        SpeedUnit.KILOMETERS -> {
-            String.format("%1$1.1f km", visibility / 1000)
-        }
-    }
-}
+//fun formatTempDisplay(temp: Float, tempDisplayUnit: TemperatureUnit): String {
+//    return when (tempDisplayUnit) {
+//        TemperatureUnit.FAHRENHEIT -> String.format("%.0f°", temp)
+//        TemperatureUnit.CELSIUS -> {
+//            val celsiusTemp = (temp - 32f) * (5f / 9f)
+//            String.format("%.0f°", celsiusTemp)
+//        }
+//    }
+//}
+//
+//fun formatWindSpeedDisplay(windSpeed: Float, speedUnit: SpeedUnit): String {
+//    return when (speedUnit) {
+//        SpeedUnit.MILES -> {
+//            String.format("%1$.1f mi/h", windSpeed / 1.609)
+//        }
+//        SpeedUnit.KILOMETERS -> {
+//            String.format("%1$1.1f km/h", windSpeed)
+//        }
+//    }
+//}
+//
+//fun formatVisibilityDisplay(visibility: Float, speedUnit: SpeedUnit): String {
+//    return when (speedUnit) {
+//        SpeedUnit.MILES -> {
+//            String.format("%1$1.1f mi", visibility / 1609)
+//        }
+//        SpeedUnit.KILOMETERS -> {
+//            String.format("%1$1.1f km", visibility / 1000)
+//        }
+//    }
+//}
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun formatTime(dt: Long, timeZone: String): String {

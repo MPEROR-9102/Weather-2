@@ -1,5 +1,9 @@
 package com.example.weather.currentweather
 
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.ComponentName
+import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -17,6 +21,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.weather.*
 import com.example.weather.api.Status
 import com.example.weather.databinding.FragmentWeatherBinding
+import com.example.weather.initialrequest.WeatherForecastServiceOne
 import com.example.weather.location.SendType
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,14 +51,11 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                 currentWeatherToolbar.title = location.ifBlank {
                     resources.getString(R.string.app_name)
                 }
-                noCityDataLayout.isVisible = location.isBlank()
+                noCityDataText.isVisible = location.isBlank()
+                initialAddButton.isVisible = location.isBlank()
                 scrollLayout.isNestedScrollingEnabled = location.isNotBlank()
                 swipeToRefresh.isEnabled = connectivity && location.isNotBlank()
-                mainLayout.isVisible = location.isNotBlank()
-
-                hourlyForecastCardView.isVisible = connectivity
-                sunProgressCardView.isVisible = connectivity
-                detailsCardView.isVisible = connectivity
+                mainLayout.isVisible = connectivity && location.isNotBlank()
             }
 
             currentWeatherToolbar.setOnMenuItemClickListener { item ->
@@ -70,6 +72,10 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                 }
             }
 
+            initialAddButton.setOnClickListener {
+                viewModel.onInitialAddButtonClicked()
+            }
+
             swipeToRefresh.setOnRefreshListener {
                 viewModel.onRefreshed()
             }
@@ -83,25 +89,9 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
             viewModel.currentWeatherData.observe(viewLifecycleOwner) { weatherData ->
                 val timeZone = weatherData.timezone
                 weatherData.current.apply {
+                    tempTextView.text = String.format("%.0f°", temp)
                     dateTextView.text = formatDate(date, timeZone)
                     timeTextView.text = formatTime(date, timeZone)
-
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        viewModel.preferencesFlow.first().apply {
-                            tempTextView.text = formatTempDisplay(
-                                temp,
-                                this.temperatureUnit
-                            )
-                            windTextView.text = formatWindSpeedDisplay(
-                                wind_speed,
-                                this.speedUnit
-                            )
-                            visibilityTextView.text = formatVisibilityDisplay(
-                                visibility.toFloat(),
-                                this.speedUnit
-                            )
-                        }
-                    }
 
                     mainTextView.text = weather[0].main
                     Glide.with(requireView())
@@ -116,6 +106,20 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                     humidityTextView.text = String.format("%1$1d%2$%", humidity)
                     windText.text = String.format("%1$1s Wind", getDirection(wind_deg))
                     pressureTextView.text = String.format("%1$1d hPa", pressure)
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        when (viewModel.preferencesFlow.first().unitSystem) {
+                            UnitSystem.IMPERIAL -> {
+                                visibilityTextView.text =
+                                    String.format("%.2f mi", visibility.toFloat() / 1609)
+                                windTextView.text = String.format("%.2f mi/h", wind_speed)
+                            }
+                            UnitSystem.METRIC -> {
+                                visibilityTextView.text =
+                                    String.format("%.2f km", visibility.toFloat() / 1000)
+                                windTextView.text = String.format("%.2f km/h", wind_speed * 3.6)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -157,7 +161,7 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                                 Snackbar.make(
                                     requireView(),
                                     event.message,
-                                    event.delay
+                                    Snackbar.LENGTH_SHORT
                                 )
                                     .setBackgroundTint(resources.getColor(R.color.red))
                                     .setTextColor(Color.WHITE)
@@ -167,13 +171,24 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                                 Snackbar.make(
                                     requireView(),
                                     event.message,
-                                    event.delay
+                                    Snackbar.LENGTH_SHORT
                                 )
                                     .setBackgroundTint(Color.WHITE)
                                     .setTextColor(resources.getColor(R.color.red))
                                     .show()
                             }
                         }
+                    }
+                    WeatherViewModel.WeatherForecastEvents.ReloadLocationData -> {
+                        val jobScheduler =
+                            requireActivity().getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+                        val jobInfo = JobInfo.Builder(
+                            WeatherForecastServiceOne.LOCATION_DATA_REQUEST_JOB_ID,
+                            ComponentName(requireContext(), WeatherForecastServiceOne::class.java)
+                        )
+                            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                            .build()
+                        jobScheduler.schedule(jobInfo)
                     }
                 }
             }

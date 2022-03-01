@@ -10,7 +10,6 @@ import com.example.weather.api.Status
 import com.example.weather.api.WeatherResponse
 import com.example.weather.currentweatherdata.HourlyData
 import com.example.weather.location.SendType
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -73,6 +72,12 @@ class WeatherViewModel @Inject constructor(
             weatherEventsChannel.send(WeatherForecastEvents.ShowSettingsScreen)
         }
 
+    fun onInitialAddButtonClicked() {
+        viewModelScope.launch {
+            showCitiesScreen()
+        }
+    }
+
     fun onRefreshed() {
         viewModelScope.launch {
             loadAndDisplayWeatherData(preferencesFlow.first().currentLocation)
@@ -108,14 +113,10 @@ class WeatherViewModel @Inject constructor(
 
     fun onUnitsChanged() {
         viewModelScope.launch {
-            loadAndDisplayWeatherData(preferencesFlow.first().currentLocation)
-            weatherEventsChannel.send(
-                WeatherForecastEvents.ShowWeatherMessage(
-                    SnackBarType.WHITE,
-                    "Will Be Updated Completely Upon App Restart",
-                    Snackbar.LENGTH_LONG
-                )
-            )
+            if (preferencesFlow.first().currentLocation.isNotBlank()) {
+                loadAndDisplayWeatherData(preferencesFlow.first().currentLocation)
+                weatherEventsChannel.send(WeatherForecastEvents.ReloadLocationData)
+            }
         }
     }
 
@@ -164,10 +165,9 @@ class WeatherViewModel @Inject constructor(
         object ShowCitiesScreen : WeatherForecastEvents()
         object ShowSettingsScreen : WeatherForecastEvents()
         data class ShowCurrentLoadingStatus(val status: Status) : WeatherForecastEvents()
-        data class ShowWeatherMessage(
-            val type: SnackBarType,
-            val message: String,
-            val delay: Int = Snackbar.LENGTH_SHORT
-        ) : WeatherForecastEvents()
+        data class ShowWeatherMessage(val type: SnackBarType, val message: String) :
+            WeatherForecastEvents()
+
+        object ReloadLocationData : WeatherForecastEvents()
     }
 }

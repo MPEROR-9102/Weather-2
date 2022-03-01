@@ -3,7 +3,7 @@
     <string name="app_name">Weather</string>
     <string name="content_desc">TODO</string>
     <string name="delete_all_action_title">Delete All</string>
-    <string name="no_city_1">No City Data To Show,\n Add Your City</string>
+    <string name="no_city_1">No City Data To Show, Add Your City</string>
     <string name="no_city_2">No Cities</string>
     <string name="center_full_stop">.</string>
     <string name="settings_action_title">Settings</string>
@@ -17,11 +17,9 @@
     <string name="wind_text_view">WIND</string>
     <string name="pressure_text_view">PRESSURE</string>
     <string name="visibility_text_view">VISIBILITY</string>
-    <string name="fahrenheit_toggle_text">°F</string>
-    <string name="celsius_toggle_text">°C</string>
-    <string name="temp_unit_text_view">Temperature Unit</string>
-    <string name="speed_unit_text_view">Speed Unit</string>
-    <string name="miles_toggle_text">mi/h</string>
-    <string name="kilometer_toggle_text">km/h</string>
+    <string name="unit_text_view">Unit System</string>
+    <string name="imperial_toggle_text">Imperial</string>
+    <string name="metric_toggle_text">Metric</string>
     <string name="app_tag">Weather By MPEROR</string>
+    <string name="initial_add_button_text">Add City</string>
 </resources>

@@ -19,16 +19,11 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(FI
 
 data class FilterPreferences(
     val currentLocation: String,
-    val temperatureUnit: TemperatureUnit,
-    val speedUnit: SpeedUnit
+    val unitSystem: UnitSystem
 )
 
-enum class TemperatureUnit {
-    FAHRENHEIT, CELSIUS
-}
-
-enum class SpeedUnit {
-    MILES, KILOMETERS
+enum class UnitSystem {
+    IMPERIAL, METRIC
 }
 
 @Singleton
@@ -38,8 +33,7 @@ class PreferenceManager @Inject constructor(
 
     private object PreferenceKeys {
         val CURRENT_LOCATION = stringPreferencesKey("currentLocation")
-        val TEMPERATURE_UNIT = stringPreferencesKey("temperatureUnit")
-        val SPEED_UNIT = stringPreferencesKey("speedUnit")
+        val UNIT_SYSTEM = stringPreferencesKey("unitSystem")
     }
 
     val preferencesFlow = context.dataStore.data
@@ -52,13 +46,9 @@ class PreferenceManager @Inject constructor(
         }
         .map {
             val location = it[PreferenceKeys.CURRENT_LOCATION] ?: ""
-            val temperatureUnit = TemperatureUnit.valueOf(
-                it[PreferenceKeys.TEMPERATURE_UNIT] ?: TemperatureUnit.FAHRENHEIT.name
-            )
-            val speedUnit = SpeedUnit.valueOf(
-                it[PreferenceKeys.SPEED_UNIT] ?: SpeedUnit.MILES.name
-            )
-            FilterPreferences(location, temperatureUnit, speedUnit)
+            val unitSystem =
+                UnitSystem.valueOf(it[PreferenceKeys.UNIT_SYSTEM] ?: UnitSystem.IMPERIAL.name)
+            FilterPreferences(location, unitSystem)
         }
 
     suspend fun updateCurrentLocation(cityName: String) {
@@ -67,15 +57,9 @@ class PreferenceManager @Inject constructor(
         }
     }
 
-    suspend fun updateTemperatureUnit(temperatureUnit: TemperatureUnit) {
+    suspend fun updateUnitSystem(unitSystem: UnitSystem) {
         context.dataStore.edit {
-            it[PreferenceKeys.TEMPERATURE_UNIT] = temperatureUnit.name
-        }
-    }
-
-    suspend fun updateSpeedUnit(speedUnit: SpeedUnit) {
-        context.dataStore.edit {
-            it[PreferenceKeys.SPEED_UNIT] = speedUnit.name
+            it[PreferenceKeys.UNIT_SYSTEM] = unitSystem.name
         }
     }
 }

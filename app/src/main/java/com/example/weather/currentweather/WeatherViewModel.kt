@@ -23,6 +23,10 @@ data class ConnectivityNLocation(
     val location: String
 )
 
+enum class CitiesStatus {
+    InitialAdd, JustCities
+}
+
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
     preferenceManager: PreferenceManager,
@@ -55,16 +59,16 @@ class WeatherViewModel @Inject constructor(
     }
 
     fun onCitiesActionClicked() {
-        showCitiesScreen()
+        showCitiesScreen(CitiesStatus.JustCities)
     }
 
     fun onSettingsActionClicked() {
         showSettingsScreen()
     }
 
-    private fun showCitiesScreen() =
+    private fun showCitiesScreen(citiesStatus: CitiesStatus) =
         viewModelScope.launch {
-            weatherEventsChannel.send(WeatherForecastEvents.ShowCitiesScreen)
+            weatherEventsChannel.send(WeatherForecastEvents.ShowCitiesScreen(citiesStatus))
         }
 
     private fun showSettingsScreen() =
@@ -74,7 +78,7 @@ class WeatherViewModel @Inject constructor(
 
     fun onInitialAddButtonClicked() {
         viewModelScope.launch {
-            showCitiesScreen()
+            showCitiesScreen(CitiesStatus.InitialAdd)
         }
     }
 
@@ -162,7 +166,7 @@ class WeatherViewModel @Inject constructor(
         data class LoadHourlyForecastData(val hourlyDataList: List<HourlyData>) :
             WeatherForecastEvents()
 
-        object ShowCitiesScreen : WeatherForecastEvents()
+        data class ShowCitiesScreen(val status: CitiesStatus) : WeatherForecastEvents()
         object ShowSettingsScreen : WeatherForecastEvents()
         data class ShowCurrentLoadingStatus(val status: Status) : WeatherForecastEvents()
         data class ShowWeatherMessage(val type: SnackBarType, val message: String) :

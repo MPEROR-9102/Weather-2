@@ -4,6 +4,7 @@ import androidx.lifecycle.*
 import com.example.weather.*
 import com.example.weather.api.ApiHelper
 import com.example.weather.api.Status
+import com.example.weather.currentweather.CitiesStatus
 import com.example.weather.database.Location
 import com.example.weather.database.LocationDao
 import com.example.weather.di.ApplicationScope
@@ -32,7 +33,8 @@ class LocationViewModel @Inject constructor(
     weatherReceiver: WeatherReceiver,
     private val apiHelper: ApiHelper,
     private val preferenceManager: PreferenceManager,
-    private val locationDao: LocationDao
+    private val locationDao: LocationDao,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val locationEventChannel = Channel<LocationEvent>()
@@ -51,7 +53,11 @@ class LocationViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            if (allLocationFlow.first().isNullOrEmpty() && connection.value == true) {
+            if (
+                allLocationFlow.first().isNullOrEmpty() &&
+                connection.value == true &&
+                savedStateHandle.get<String>("citiesStatus").equals(CitiesStatus.InitialAdd.name)
+            ) {
                 showLocationEntryScreen()
             }
         }

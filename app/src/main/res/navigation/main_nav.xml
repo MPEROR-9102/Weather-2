@@ -8,7 +8,11 @@
         android:id="@+id/locationFragment"
         android:name="com.example.weather.location.LocationFragment"
         android:label="Cities"
-        tools:layout="@layout/fragment_location" />
+        tools:layout="@layout/fragment_location">
+        <argument
+            android:name="citiesStatus"
+            app:argType="string" />
+    </fragment>
     <fragment
         android:id="@+id/weatherFragment2"
         android:name="com.example.weather.currentweather.WeatherFragment"

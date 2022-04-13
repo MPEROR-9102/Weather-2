@@ -136,9 +136,9 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                     is WeatherViewModel.WeatherForecastEvents.LoadHourlyForecastData -> {
                         hourlyForecastAdapter.submitList(event.hourlyDataList)
                     }
-                    WeatherViewModel.WeatherForecastEvents.ShowCitiesScreen -> {
+                    is WeatherViewModel.WeatherForecastEvents.ShowCitiesScreen -> {
                         val action =
-                            WeatherFragmentDirections.actionWeatherFragment2ToLocationFragment()
+                            WeatherFragmentDirections.actionWeatherFragment2ToLocationFragment(event.status.name)
                         findNavController().navigate(action)
                     }
                     WeatherViewModel.WeatherForecastEvents.ShowSettingsScreen -> {

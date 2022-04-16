@@ -12,6 +12,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.weather.R
 import com.example.weather.UnitSystem
 import com.example.weather.databinding.FragmentSettingsBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -28,6 +29,8 @@ class SettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        activity?.findViewById<BottomNavigationView>(R.id.bottomNavBar)?.visibility =
+            BottomNavigationView.GONE
 
         binding.apply {
             settingsToolbar.setupWithNavController(findNavController())

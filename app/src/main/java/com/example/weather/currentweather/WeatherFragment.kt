@@ -11,8 +11,8 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +23,7 @@ import com.example.weather.api.Status
 import com.example.weather.databinding.FragmentWeatherBinding
 import com.example.weather.initialrequest.WeatherForecastServiceOne
 import com.example.weather.location.SendType
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -33,7 +34,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class WeatherFragment : Fragment(R.layout.fragment_weather) {
 
-    private val viewModel by viewModels<WeatherViewModel>()
+    private val viewModel: WeatherViewModel by activityViewModels()
 
     @Inject
     lateinit var weatherReceiver: WeatherReceiver
@@ -56,6 +57,8 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                 scrollLayout.isNestedScrollingEnabled = location.isNotBlank()
                 swipeToRefresh.isEnabled = connectivity && location.isNotBlank()
                 mainLayout.isVisible = connectivity && location.isNotBlank()
+                activity?.findViewById<BottomNavigationView>(R.id.bottomNavBar)?.isVisible =
+                    location.isNotBlank()
             }
 
             currentWeatherToolbar.setOnMenuItemClickListener { item ->
@@ -134,7 +137,7 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
             viewModel.weatherEvents.collect { event ->
                 when (event) {
                     is WeatherViewModel.WeatherForecastEvents.LoadHourlyForecastData -> {
-                        hourlyForecastAdapter.submitList(event.hourlyDataList)
+                        hourlyForecastAdapter.submitList(event.hourlyDataList.subList(0, 24))
                     }
                     is WeatherViewModel.WeatherForecastEvents.ShowCitiesScreen -> {
                         val action =

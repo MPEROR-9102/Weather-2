@@ -25,6 +25,7 @@ import com.example.weather.api.Status
 import com.example.weather.database.Location
 import com.example.weather.databinding.FragmentLocationBinding
 import com.example.weather.exhaustive
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -45,6 +46,8 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentLocationBinding.inflate(inflater, container, false)
+        activity?.findViewById<BottomNavigationView>(R.id.bottomNavBar)?.visibility =
+            BottomNavigationView.GONE
 
         binding.apply {
             viewModel.connection.observe(viewLifecycleOwner) {

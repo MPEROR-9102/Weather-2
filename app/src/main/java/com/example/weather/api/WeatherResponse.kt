@@ -43,9 +43,9 @@ data class WeatherResponse(
     data class DailyForecast(
         @field: Json(name = "dt") val date: Long,
         val temp: Temperature,
-        val humidity: Int,
-        val wind_speed: Float,
-        val wind_deg: Int,
+        val clouds: Int,
+        val uvi: Float,
+        val pop: Float,
         val weather: List<OneCallWeatherDescription>
     )
 }

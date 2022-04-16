@@ -11,12 +11,15 @@
         <entry key="app/src/main/res/layout/daily_view_layout.xml" value="0.24074074074074073" />
         <entry key="app/src/main/res/layout/edittext_layout.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/layout/fragment_current_weather.xml" value="0.26296296296296295" />
-        <entry key="app/src/main/res/layout/fragment_location.xml" value="0.28229166666666666" />
+        <entry key="app/src/main/res/layout/fragment_daily_weather.xml" value="0.2682291666666667" />
+        <entry key="app/src/main/res/layout/fragment_location.xml" value="0.2222222222222222" />
         <entry key="app/src/main/res/layout/fragment_settings.xml" value="0.24537037037037038" />
         <entry key="app/src/main/res/layout/fragment_weather.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/layout/hourly_view_layout.xml" value="0.24074074074074073" />
         <entry key="app/src/main/res/layout/location_view_layout.xml" value="0.28229166666666666" />
+        <entry key="app/src/main/res/menu/bottom_nav_menu.xml" value="0.2222222222222222" />
         <entry key="app/src/main/res/menu/current_weather_menu.xml" value="0.28229166666666666" />
+        <entry key="app/src/main/res/menu/daily_forecast_menu.xml" value="0.28229166666666666" />
         <entry key="app/src/main/res/menu/location_menu.xml" value="0.28229166666666666" />
       </map>
     </option>

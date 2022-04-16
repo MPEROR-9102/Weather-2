@@ -10,6 +10,9 @@ import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.findNavController
+import androidx.navigation.ui.setupWithNavController
+import com.example.weather.databinding.ActivityMainBinding
 import com.example.weather.initialrequest.WeatherForecastServiceOne
 import com.example.weather.initialrequest.WeatherForecastServiceTwo
 import com.google.android.material.snackbar.Snackbar
@@ -44,7 +47,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        val binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.bottomNavBar.setupWithNavController(
+            findNavController(R.id.navHostFragment)
+        )
 
         jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         jobInfoOne = JobInfo.Builder(

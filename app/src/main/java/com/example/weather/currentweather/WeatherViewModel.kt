@@ -8,7 +8,6 @@ import com.example.weather.WeatherReceiver
 import com.example.weather.api.ApiHelper
 import com.example.weather.api.Status
 import com.example.weather.api.WeatherResponse
-import com.example.weather.currentweatherdata.HourlyData
 import com.example.weather.location.SendType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel

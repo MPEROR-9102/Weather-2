@@ -21,4 +21,8 @@
     <string name="metric_toggle_text">Metric</string>
     <string name="app_tag">Weather By MPEROR</string>
     <string name="initial_add_button_text">Add City</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="today_action_title">Today</string>
+    <string name="daily_action_title">Daily</string>
 </resources>

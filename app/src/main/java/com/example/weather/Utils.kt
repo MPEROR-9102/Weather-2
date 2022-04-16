@@ -12,7 +12,7 @@ val <T> T.exhaustive: T
 fun iconUrl(iconId: String) = "http://openweathermap.org/img/wn/$iconId@2x.png"
 
 @RequiresApi(Build.VERSION_CODES.O)
-private fun getClock(dt: Long, timeZone: String): ZonedDateTime =
+fun getClock(dt: Long, timeZone: String): ZonedDateTime =
     Instant.ofEpochSecond(dt).atZone(ZoneId.of(timeZone))
 
 @RequiresApi(Build.VERSION_CODES.O)

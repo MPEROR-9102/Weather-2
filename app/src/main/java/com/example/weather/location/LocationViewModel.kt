@@ -58,7 +58,7 @@ class LocationViewModel @Inject constructor(
                 connection.value == true &&
                 savedStateHandle.get<String>("citiesStatus").equals(CitiesStatus.InitialAdd.name)
             ) {
-                showLocationEntryScreen()
+                locationEventChannel.send(LocationEvent.ShowInitialAddLocationScreen)
             }
         }
     }
@@ -69,6 +69,18 @@ class LocationViewModel @Inject constructor(
                 LocationEvent.ShowLocationMessage(type, message)
             )
         }
+
+    fun onFindLocationActionClicked() {
+        viewModelScope.launch {
+            locationEventChannel.send(LocationEvent.CheckLocationPermissionsGranted)
+        }
+    }
+
+    fun onLocationPermissionGranted() {
+        viewModelScope.launch {
+            locationEventChannel.send(LocationEvent.GetCurrentLocation)
+        }
+    }
 
     fun onDeleteAllActionClicked() {
         deleteAllConfirmation()
@@ -208,6 +220,9 @@ class LocationViewModel @Inject constructor(
         }
 
     sealed class LocationEvent {
+        object ShowInitialAddLocationScreen : LocationEvent()
+        object CheckLocationPermissionsGranted : LocationEvent()
+        object GetCurrentLocation : LocationEvent()
         data class ShowDeleteAllConfirmationScreen(val title: String) : LocationEvent()
         object ShowLocationEntryScreen : LocationEvent()
         data class ShowLocationMessage(val type: SnackBarType, val message: String) :

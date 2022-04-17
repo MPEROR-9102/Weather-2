@@ -4,8 +4,8 @@
 
     <item
         android:id="@+id/detailsInfoAction"
-        android:title="Details Info"
         android:icon="@drawable/ic_baseline_info_24"
+        android:title="Info"
         app:showAsAction="ifRoom" />
 
 </menu>

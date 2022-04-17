@@ -8,10 +8,14 @@ import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.weather.R
 import com.example.weather.currentweather.WeatherViewModel
 import com.example.weather.databinding.FragmentDailyWeatherBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 
 @AndroidEntryPoint
 class DailyWeatherFragment : Fragment() {
@@ -34,6 +38,16 @@ class DailyWeatherFragment : Fragment() {
                 viewModel.connectivityNLocation.value?.location
             )
 
+            dailyForecastToolbar.setOnMenuItemClickListener { menuItem ->
+                return@setOnMenuItemClickListener when (menuItem.itemId) {
+                    R.id.detailsInfoAction -> {
+                        viewModel.onInfoActionClicked()
+                        true
+                    }
+                    else -> false
+                }
+            }
+
             val dailyForecastAdapter = DailyForecastAdapter()
             dailyForecastRecyclerView.apply {
                 layoutManager = GridLayoutManager(requireContext(), 2)
@@ -53,6 +67,19 @@ class DailyWeatherFragment : Fragment() {
                 )
             })
         }
+
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewModel.dailyForecastEvents.collect { event ->
+                when (event) {
+                    WeatherViewModel.DailyForecastEvents.ShowInfoScreen -> {
+                        findNavController().navigate(
+                            DailyWeatherFragmentDirections.actionGlobalInfoDialogFragment()
+                        )
+                    }
+                }
+            }
+        }
+
         return binding.root
     }
 

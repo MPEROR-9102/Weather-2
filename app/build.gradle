@@ -86,4 +86,7 @@ dependencies {
 
     //DataStore
     implementation "androidx.datastore:datastore-preferences:$datastore_version"
+
+    //Location Services
+    implementation 'com.google.android.gms:play-services-location:19.0.1'
 }

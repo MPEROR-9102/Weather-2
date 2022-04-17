@@ -42,4 +42,11 @@
         android:name="com.example.weather.dailyweather.DailyWeatherFragment"
         android:label="fragment_daily_weather"
         tools:layout="@layout/fragment_daily_weather" />
+    <dialog
+        android:id="@+id/infoDialogFragment"
+        android:name="com.example.weather.dailyweather.info.InfoDialogFragment"
+        android:label="InfoDialogFragment" />
+    <action
+        android:id="@+id/action_global_infoDialogFragment"
+        app:destination="@id/infoDialogFragment" />
 </navigation>

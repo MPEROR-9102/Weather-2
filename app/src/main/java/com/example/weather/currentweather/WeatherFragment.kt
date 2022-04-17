@@ -107,7 +107,7 @@ class WeatherFragment : Fragment(R.layout.fragment_weather) {
                     sunsetTextView.text = formatTime(sunset, timeZone)
 
                     humidityTextView.text = String.format("%1$1d%2$%", humidity)
-                    windText.text = String.format("%1$1s Wind", getDirection(wind_deg))
+                    windText.text = String.format("%1$1s WIND", getDirection(wind_deg))
                     pressureTextView.text = String.format("%1$1d hPa", pressure)
                     viewLifecycleOwner.lifecycleScope.launch {
                         when (viewModel.preferencesFlow.first().unitSystem) {

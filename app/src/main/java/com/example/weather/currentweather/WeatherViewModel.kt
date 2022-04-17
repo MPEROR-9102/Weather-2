@@ -36,6 +36,9 @@ class WeatherViewModel @Inject constructor(
     private val weatherEventsChannel = Channel<WeatherForecastEvents>()
     val weatherEvents = weatherEventsChannel.receiveAsFlow()
 
+    private val dailyForecastEventsChannel = Channel<DailyForecastEvents>()
+    val dailyForecastEvents = dailyForecastEventsChannel.receiveAsFlow()
+
     val preferencesFlow = preferenceManager.preferencesFlow
 
     private val connectivityNLocationFlow = combine(
@@ -63,6 +66,12 @@ class WeatherViewModel @Inject constructor(
 
     fun onSettingsActionClicked() {
         showSettingsScreen()
+    }
+
+    fun onInfoActionClicked() {
+        viewModelScope.launch {
+            dailyForecastEventsChannel.send(DailyForecastEvents.ShowInfoScreen)
+        }
     }
 
     private fun showCitiesScreen(citiesStatus: CitiesStatus) =
@@ -172,5 +181,9 @@ class WeatherViewModel @Inject constructor(
             WeatherForecastEvents()
 
         object ReloadLocationData : WeatherForecastEvents()
+    }
+
+    sealed class DailyForecastEvents {
+        object ShowInfoScreen : DailyForecastEvents()
     }
 }

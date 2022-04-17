@@ -1,13 +1,23 @@
 package com.example.weather.location
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.location.Geocoder
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -25,6 +35,11 @@ import com.example.weather.api.Status
 import com.example.weather.database.Location
 import com.example.weather.databinding.FragmentLocationBinding
 import com.example.weather.exhaustive
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.OnTokenCanceledListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -41,6 +56,41 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
     private var connectivity: Boolean = false
     private lateinit var locationAdapter: LocationAdapter
 
+    private lateinit var locationManager: LocationManager
+    private lateinit var locationRequestPermission: ActivityResultLauncher<Array<out String>>
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            locationRequestPermission = registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { permissions ->
+                when {
+                    permissions.getOrDefault(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        false
+                    ) -> {
+                        viewModel.onLocationPermissionGranted()
+                    }
+                    permissions.getOrDefault(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        false
+                    ) -> {
+                        viewModel.onLocationPermissionGranted()
+                    }
+                    else -> {
+                        Toast.makeText(
+                            requireContext(),
+                            "Location Permissions Denied",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -48,6 +98,8 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
         _binding = FragmentLocationBinding.inflate(inflater, container, false)
         activity?.findViewById<BottomNavigationView>(R.id.bottomNavBar)?.visibility =
             BottomNavigationView.GONE
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(requireContext())
 
         binding.apply {
             viewModel.connection.observe(viewLifecycleOwner) {
@@ -59,6 +111,10 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
                 setupWithNavController(findNavController())
                 setOnMenuItemClickListener {
                     return@setOnMenuItemClickListener when (it.itemId) {
+                        R.id.findLocationAction -> {
+                            viewModel.onFindLocationActionClicked()
+                            true
+                        }
                         R.id.deleteAllAction -> {
                             viewModel.onDeleteAllActionClicked()
                             true
@@ -101,6 +157,67 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.locationEvent.collect { event ->
                 when (event) {
+                    LocationViewModel.LocationEvent.ShowInitialAddLocationScreen -> {
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Add Location?")
+                            .setPositiveButton("GPS") { _, _ ->
+                                viewModel.onFindLocationActionClicked()
+                            }
+                            .setNeutralButton("Manually") { _, _ ->
+                                viewModel.onAddLocationClicked()
+                            }
+                            .show()
+                    }
+                    LocationViewModel.LocationEvent.CheckLocationPermissionsGranted -> {
+                        if (ActivityCompat.checkSelfPermission(
+                                requireContext(),
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                                requireContext(),
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            viewModel.onLocationPermissionGranted()
+                        } else {
+                            locationRequestPermission.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        }
+                    }
+                    LocationViewModel.LocationEvent.GetCurrentLocation -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+                            locationManager.isLocationEnabled
+                        ) {
+                            binding.progressBar.isVisible = true
+                            fusedLocationProviderClient.getCurrentLocation(
+                                LocationRequest.PRIORITY_HIGH_ACCURACY,
+                                object : CancellationToken() {
+                                    override fun onCanceledRequested(p0: OnTokenCanceledListener): CancellationToken =
+                                        this
+
+                                    override fun isCancellationRequested(): Boolean =
+                                        true
+                                }
+                            ).addOnSuccessListener { location ->
+                                viewModel.onLocationEntered(
+                                    Geocoder(requireContext()).getFromLocation(
+                                        location.latitude,
+                                        location.longitude,
+                                        1
+                                    )[0].locality
+                                )
+                            }
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "Location Turned Off",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                     is LocationViewModel.LocationEvent.ShowDeleteAllConfirmationScreen -> {
                         AlertDialog.Builder(requireContext())
                             .setTitle(event.title)
@@ -179,6 +296,11 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
 
     override fun onItemLongClick(location: Location) {
         viewModel.onLocationLongClicked(location)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
     override fun onDestroyView() {

@@ -17,6 +17,14 @@ class ApiHelper @Inject constructor(
             BuildConfig.OPEN_WEATHER_MAP_API_KEY
         )
 
+    suspend fun currentLocation(lat: Double, lon: Double) =
+        openWeatherMapApi.currentLocation(
+            lat,
+            lon,
+            preferenceManager.preferencesFlow.first().unitSystem.name.lowercase(),
+            BuildConfig.OPEN_WEATHER_MAP_API_KEY
+        )
+
     suspend fun currentWeather(cityName: String): WeatherResponse {
         val locationResponse = currentLocation(cityName)
         val weatherResponse = openWeatherMapApi.currentWeather(

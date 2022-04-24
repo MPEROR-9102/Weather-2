@@ -16,6 +16,14 @@ interface OpenWeatherMapApi {
         @Query("appid") apiKey: String
     ): LocationResponse
 
+    @GET("data/2.5/weather")
+    suspend fun currentLocation(
+        @Query("lat") latitude: Double,
+        @Query("lon") longitude: Double,
+        @Query("units") unit: String,
+        @Query("appid") apiKey: String
+    ): LocationResponse
+
     @GET("data/2.5/onecall")
     suspend fun currentWeather(
         @Query("lat") latitude: Float,

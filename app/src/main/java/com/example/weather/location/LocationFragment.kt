@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.location.Geocoder
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -151,7 +150,7 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
 
         setFragmentResultListener("locationEntry") { _, bundle ->
             val location = bundle.get("addedLocation") as String
-            viewModel.onLocationEntered(location)
+            viewModel.onLocationEntered(LocationType.City(location))
         }
 
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
@@ -203,11 +202,10 @@ class LocationFragment : Fragment(), LocationAdapter.ItemListener {
                                 }
                             ).addOnSuccessListener { location ->
                                 viewModel.onLocationEntered(
-                                    Geocoder(requireContext()).getFromLocation(
+                                    LocationType.GPS(
                                         location.latitude,
-                                        location.longitude,
-                                        1
-                                    )[0].locality
+                                        location.longitude
+                                    )
                                 )
                             }
                         } else {

@@ -18,6 +18,11 @@ import javax.inject.Inject
 
 private const val TAG = "LocationViewModel"
 
+sealed class LocationType {
+    data class City(val cityName: String) : LocationType()
+    data class GPS(val lat: Double, val lon: Double) : LocationType()
+}
+
 enum class SendType {
     ADD, UPDATE
 }
@@ -119,19 +124,33 @@ class LocationViewModel @Inject constructor(
             locationEventChannel.send(LocationEvent.ShowLocationEntryScreen)
         }
 
-    fun onLocationEntered(location: String) {
-        if (location.isNotBlank()) {
-            loadAndInsertLocationData(location)
-        } else {
-            showLocationMessage(SnackBarType.RED, "No Entry Found")
+    fun onLocationEntered(locationType: LocationType) {
+        when (locationType) {
+            is LocationType.City -> {
+                if (locationType.cityName.isNotBlank()) {
+                    loadAndInsertLocationData(locationType)
+                } else {
+                    showLocationMessage(SnackBarType.RED, "No Entry Found")
+                }
+            }
+            is LocationType.GPS -> {
+                loadAndInsertLocationData(locationType)
+            }
         }
     }
 
-    private fun loadAndInsertLocationData(location: String) =
+    private fun loadAndInsertLocationData(locationType: LocationType) =
         applicationScope.launch {
             locationEventChannel.send(LocationEvent.ShowCurrentLoadingStatus(Status.LOADING))
             try {
-                val locationData = apiHelper.currentLocation(location)
+                val locationData = when (locationType) {
+                    is LocationType.City -> {
+                        apiHelper.currentLocation(locationType.cityName)
+                    }
+                    is LocationType.GPS -> {
+                        apiHelper.currentLocation(locationType.lat, locationType.lon)
+                    }
+                }
                 locationEventChannel.send(LocationEvent.ShowCurrentLoadingStatus(Status.SUCCESS))
                 if (locationDao.insert(
                         Location(
